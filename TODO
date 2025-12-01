@@ -7,6 +7,10 @@ This is our TODO list:
     - Only extract scraping and embedding > delete RAG
     - 
 
+- Agent
+    - Tools sind bisher sehr basic > müssen komplexer
+    - Agent muss "schlauer werden" > wann welchen Aufruf etc. 
+
 
 
 What you need to do to run it:

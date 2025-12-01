@@ -7,9 +7,9 @@ import os
 load_dotenv()
 
 def build_agent():
-    # 1. Tools instanziieren
+    # 1. Tools Íinstanziieren
     # Hinweis: Pfade müssen von dort stimmen, wo du main.py ausführst
-    rag_tool = RAGQueryTool("./data/nasdaq_chroma_db") 
+    rag_tool = RAGQueryTool("./data") 
     eda_tool = EDASummaryTool("./data/nasdaq_100_final_for_RAG.csv")
 
     # 2. Model definieren (Engine)
