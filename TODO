@@ -6,3 +6,19 @@ This is our TODO list:
     - Enlarge the VectorDB with more news > get new data > embedd them in new vector VectorDB
     - Only extract scraping and embedding > delete RAG
     - 
+
+
+
+What you need to do to run it:
+- Define OpenAI key and model in .venv
+    - example: 
+        OPENAI_API_KEY=sk-proj-vIF1EwS
+        OPENAI_MODEL=gpt-4.1-mini
+
+- activate the virtual environment called genai (also in this folder)
+
+- call in terminal "python main.py"
+    > startet den Agenten
+
+- Try out the agent
+    > e.g., "Do an EDA", "Explain NVIDIA"
