@@ -5,7 +5,7 @@ import os
 
 class RAGQueryTool(Tool):
     name = "rag_query"
-    description = "Query the ChromaDB vectorstore using OpenAI embeddings to retrieve qualitative info."
+    description = "PRIMARY source for financial information. Searches the internal high-quality database for specific company details, sentiment analysis, and historical context. ALWAYS use this BEFORE web search for company questions."
     inputs = {
         "question": {
             "type": "string",
