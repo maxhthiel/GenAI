@@ -1,0 +1,7 @@
+python-dotenv
+pandas
+matplotlib
+seaborn
+chromadb
+sentence-transformers
+openai

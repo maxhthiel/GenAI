@@ -1,0 +1,8 @@
+This is our TODO list:
+
+
+
+- Data Engineering
+    - Enlarge the VectorDB with more news > get new data > embedd them in new vector VectorDB
+    - Only extract scraping and embedding > delete RAG
+    - 
