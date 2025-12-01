@@ -1,28 +1,104 @@
 This is our TODO list:
+# 📝 Projekt-Fahrplan: Smol-Quant
+
+## 1. Data Engineering (Datenbasis aufräumen)
+
+* **Skripte trennen:**
+    * Wir haben aktuell alles gemischt und nutzen Niklas' alte Jupyter Notebooks. Wir sollten zeigen, dass wir es für diesen Kurs selber gemacht haben.
+    * **Neu:** Ein Skript **`data_scraping.py`** (nur Wikipedia/Yahoo abfragen & CSV speichern).
+    * **Neu:** Ein Skript **`embeddings.py`** (nimmt die CSV & füllt die ChromaDB).
+    * *Ziel:* Wir können die DB neu bauen, ohne jedes Mal neu zu scrapen.
+
+* **RAG-Code bereinigen:**
+    * Den alten Code für die RAG-Kette rauswerfen. Wir brauchen nur die Logik zum Scrapen und Embedden.
+
+* **Datenmenge vergrößern (später):**
+    * Die aktuelle VectorDB ist noch zu klein.
+    * *Aufgabe:* Mehr News-Artikel scrapen (längerer Zeitraum?), damit der Agent bei RAG auch wirklich was findet.
+
+---
+
+## 2. Agent & Tools (Das Gehirn)
+
+* **Tools komplexer machen:**
+    * **`eda_tool`**: Soll nicht nur `describe()` ausgeben. Der Agent muss gezielt Spalten filtern, **Gruppen bilden** und **Plots** speichern können.
+    * **`rag_tool`**: Muss sauberer zurückgeben, wenn er *nichts* findet (damit der Agent nicht halluziniert).
+
+* **Agent "schlauer" machen (Decision Making):**
+    * Er muss lernen: Für "Zahlen" $\rightarrow$ nimm CSV. Für "Gründe/News" $\rightarrow$ nimm RAG.
+    * Aktuell vermischt er das manchmal oder rät.
+
+---
+
+## 3. Image Generation (Visualisierung)
+
+* **Tool-Integration (DALL-E 3):**
+    * Das `ImageGenTool` steht im Code, muss aber robust getestet werden.
+    * *Aufgabe:* Sicherstellen, dass der API-Key korrekt gezogen wird und Fehler (z.B. "Content Policy Violation" bei OpenAI) sauber abgefangen werden.
+
+* **Streamlit-Anbindung (Frontend):**
+    * Problem: Der Agent gibt aktuell oft nur die Bild-URL als Text zurück. Das sieht nicht gut aus.
+    * **Lösung:** Das Streamlit-Skript muss erkennen: "Aha, eine Bild-URL!" und das Bild direkt rendern (`st.image()`), statt nur den Link zu zeigen.
+
+* **Trigger-Logik (Kostenbremse):**
+    * Bilder generieren kostet Geld und dauert lange.
+    * **Regel:** Der Agent darf das Bild-Tool **nur** nutzen, wenn der User explizit danach fragt (z.B. "Generiere ein Bild zur Marktstimmung").
+    * Es darf *nicht* automatisch bei jeder Standard-Antwort passieren.
 
 
+### 4. UI & Präsentation (Die Sichtbarkeit)
 
-- Data Engineering
-    - Enlarge the VectorDB with more news > get new data > embedd them in new vector VectorDB
-    - Only extract scraping and embedding > delete RAG
-    - 
+* **Streamlit UI bauen:**
+    * Das Terminal reicht nicht für die Abgabe.
+    * **Aufgabe:** Ein echtes Chat-Fenster bauen, das den Verlauf anzeigt (History).
 
-- Agent
-    - Tools sind bisher sehr basic > müssen komplexer
-    - Agent muss "schlauer werden" > wann welchen Aufruf etc. 
+* **Image Generation (Bild-Tool):**
+    * Muss sauber in Streamlit integriert werden.
+    * **Regel:** Das Bild wird nur generiert, wenn der Nutzer es explizit im Prompt verlangt (kostet Geld/Zeit).
 
+* **Plot-Tool:**
+    * Wenn der Agent (EDA) einen Plot generiert (Mittelwerte, Kurven), muss dieser **als Grafik** in Streamlit angezeigt werden.
+    * *Aktuell:* Er speichert es nur als Datei ab, wir sehen es nicht direkt.
 
+---
 
-What you need to do to run it:
-- Define OpenAI key and model in .venv
-    - example: 
-        OPENAI_API_KEY=sk-proj-vIF1EwS
-        OPENAI_MODEL=gpt-4.1-mini
+### 5. Bonus-Features 
 
-- activate the virtual environment called genai (also in this folder)
+* **LLM-as-a-Judge (Sicherheitscheck):**
+    * Ein **zweites, kleines LLM** prüft die finale Antwort, bevor sie rausgeht.
+    * **Check:** Stimmt die Antwort mit den Fakten überein?
+    * **Check:** Gibt der Agent illegale Finanzberatung? (Sicherheit $\rightarrow$ Punkte).
 
-- call in terminal "python main.py"
-    > startet den Agenten
+* **Sandbox / Restricted Imports (Sicherheitsgurt):**
+    * **Problem:** Der Agent führt Python-Code aktuell direkt auf unseren Laptops aus. Das ist gefährlich (er könnte theoretisch Dateien löschen oder auf private Ordner zugreifen).
+    * **Lösung:** Wir nutzen die `authorized_imports` Liste in `smolagents` strikt.
+    * **Aufgabe:** Nur harmlose Bibliotheken (`pandas`, `matplotlib`, `numpy`) erlauben. Alles andere (wie `os`, `sys`, `subprocess`) muss hart blockiert werden.
 
-- Try out the agent
-    > e.g., "Do an EDA", "Explain NVIDIA"
+* **Agent Memory (Gedächtnis):**
+    * Der Agent soll sich an **vorherige Nachrichten** erinnern können.
+    * *Beispiel:* "Wie steht Tesla?" $\rightarrow$ Agent antwortet $\rightarrow$ **Nächste Frage:** "Und wie ist das im Vergleich zu Apple?" (Der Agent weiß dann, worum es geht).
+
+* **Prompt Optimization (Smarter fragen):**
+    * Der Agent soll komplizierte Nutzer-Fragen automatisch **umformulieren** oder zerlegen.
+    * *Ziel:* Die Qualität der Antworten steigt, weil der Agent den "Plan" besser versteht.
+
+* **Hybrid Search:**
+    * Wir bauen einen **Router**.
+    * Der Agent entscheidet automatisch: Brauche ich **Text (RAG)** oder **Zahlen (CSV)**?
+    * *Ziel:* Effizienz. Nicht immer alles durchsuchen, wenn es nicht nötig ist.
+
+* **Re-Ranking:**
+    * Nachdem RAG Dokumente gefunden hat, sortiert ein **zweiter Algorithmus** die Ergebnisse nochmal nach Relevanz.
+    * *Ziel:* Nur die allerbesten Treffer werden dem LLM gegeben (weniger Halluzinationen).
+
+---
+
+## 3. Aktuelle Probleme (Bugfixing)
+
+* **OpenAI API Limits (Rate Limiting):**
+    * Problem: Der Agent "denkt" zu schnell und feuert zu viele Anfragen $\rightarrow$ Absturz (`429 Error`).
+    * **Lösung:** Wir müssen ein `time.sleep()` einbauen oder den Agenten bremsen, wenn er in einer Loop hängt.
+
+* **Prompting (Reihenfolge erzwingen):**
+    * Problem: Er greift manchmal sofort zur Websuche (die wir eigentlich ausstellen wollen) oder ignoriert Tools.
+    * **Lösung:** Den **System-Prompt** so umschreiben, dass er eine feste Checkliste abarbeitet (1. Erst DB checken, 2. Dann rechnen, 3. Dann antworten).
