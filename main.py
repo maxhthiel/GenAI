@@ -1,8 +1,10 @@
 from agent.agent import build_agent
 
-agent = build_agent()
+if __name__ == "__main__":
+    agent = build_agent()
 
-# Testfrage
-q = "Give me a summary of the CSV"
-answer = agent.run(q)
-print(answer)
+    print("SmolAgent gestartet 🚀")
+    while True:
+        q = input("\nFrage: ")
+        answer = agent.run(q)
+        print("\nAntwort:", answer)
