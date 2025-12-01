@@ -14,7 +14,7 @@ class RAGQueryTool(Tool):
     }
     output_type = "string"
 
-    def __init__(self, chroma_path: str, collection_name: str = "nasdaq"):
+    def __init__(self, chroma_path: str, collection_name: str = "nasdaq_docs"):
         super().__init__()
         # Initialisierung
         self.client = chromadb.PersistentClient(path=chroma_path)
