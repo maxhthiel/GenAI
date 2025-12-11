@@ -5,7 +5,7 @@ from smolagents import CodeAgent, OpenAIModel
 # Import your custom tools
 # Ensure these files are in your Python path
 from agent.tools.smol_rag_tool_niklas import RAGGraphTool
-from agent.tools.smol_eda_tool import EDASummaryTool
+from agent.tools.smol_eda_tool_max import EDASummaryTool
 from agent.tools.smol_image_tool_lasse import ImageGenerationTool
 
 load_dotenv()
@@ -55,7 +55,7 @@ def build_agent():
         tools=[rag_tool, eda_tool, image_tool], 
         model=model,
         add_base_tools=False, 
-        additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64"],
+        additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64", "plotly"],
         max_steps=12,
         verbosity_level=1
     )
