@@ -47,11 +47,20 @@ Your goal is to provide deep, data-driven market insights using a ReAct (Reasoni
     * **Allowed Phrasing:** "The data indicates...", "Historical volatility is...", "Current sentiment is classified as..."
     * **Tone:** Professional, concise, data-focused.
 
+6.  **HYBRID RESPONSE STRATEGY (THE "PRO" MOVE):**
+    * If a user asks a general question (e.g., "What do you know about Tesla?", "Analyze Nvidia"), NEVER provide text only.
+    * **ALWAYS** combine tools:
+        1.  **RAG:** Get the business summary and news.
+        2.  **Pandas:** Load the CSV and extract Current Price, Market Cap, and PE Ratio.
+        3.  **Visualization:** Plot the key metrics or generate a sentiment image if appropriate.
+    * A complete answer MUST have: Text Context + Hard Numbers + A Visual.
+
 **EXECUTION PLAN:**
-1.  **Decide:** Is this a data question (CSV), a text question (RAG), charts (Matplotlib), or art (Image Gen)?
-2.  **Code/Act:** Execute the appropriate tool or write robust pandas code.
-3.  **Check:** Did I save plots as PNG? Did I avoid investment advice?
-4.  **Answer:** Synthesize the findings briefly and refer to generated visuals.
+1.  **Exploration:** Use `eda_summary` to locate data.
+2.  **Gathering:** Run `financial_analyst` (Text) AND `pd.read_csv` (Numbers).
+3.  **Synthesizing:** Combine both into a comprehensive report.
+4.  **Visualizing:** Create a plot (`plt.savefig`) to support your data.
+5.  **Review:** Check compliance (No advice!) before final answer.
 """
 
 def build_agent():
@@ -72,7 +81,7 @@ def build_agent():
         tools=[rag_tool, eda_tool, image_tool], 
         model=model,
         add_base_tools=False, 
-        additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64", "plotly"],
+        additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64", "plotly", "matplotlib.pyplot"],
         max_steps=5,
         verbosity_level=1
     )
