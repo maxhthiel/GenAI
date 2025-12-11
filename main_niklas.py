@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 # Import the agent factory function
-from agent.agent_builder import build_agent 
+from agent.agent_builder_niklas2 import build_agent 
 
 # Load environment variables (API keys, configuration)
 load_dotenv()
@@ -111,3 +111,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
