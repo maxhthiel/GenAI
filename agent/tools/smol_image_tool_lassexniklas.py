@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import numpy as np
 from scipy.spatial.distance import cosine
+import requests
 
 # ------------------------------------------------------------
 # Setup
@@ -17,10 +18,9 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ------------------------------------------------------------
 # Helper functions
 # ------------------------------------------------------------
-
 def generate_image_prompt(article_summary: str) -> str:
     """Generates a prompt based on the article summary."""
-    prompt = client.chat.completions.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": """You are a helpful research assistant.
@@ -31,8 +31,8 @@ def generate_image_prompt(article_summary: str) -> str:
             Avoid real people, trademarks, companies, or geopolitical events."""},
             {"role": "user", "content": f"Article summary:\n{article_summary}\n\nGenerate an image prompt:"}
         ]
-    ).choices[0].message.content
-    return prompt
+    )
+    return response.choices[0].message.content
 
 def generate_image(prompt: str) -> str:
     """Generates an image URL using DALL-E."""
@@ -46,8 +46,27 @@ def generate_image(prompt: str) -> str:
         raise RuntimeError("Image API returned no image URL!")
     return url
 
-# Optional: Bewertung der Bilder (kann bleiben)
+def describe_image(image_url: str) -> str:
+    """Uses GPT to describe the image from its URL."""
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Describe this image in 1-2 concise sentences, focusing on key features."},
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                ]
+            }
+        ]
+    )
+    content = response.choices[0].message.content
+    if isinstance(content, list):
+        return "".join([c.get("text", "") for c in content])
+    return content
+
 def embed_text(text: str) -> np.ndarray:
+    """Returns an embedding vector for a given text."""
     emb = client.embeddings.create(
         model="text-embedding-3-small",
         input=text
@@ -55,10 +74,19 @@ def embed_text(text: str) -> np.ndarray:
     return np.array(emb)
 
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    """Returns cosine similarity between two vectors."""
     return 1 - cosine(vec1, vec2)
 
+def rate_image(prompt: str, image_url: str) -> float:
+    """Rates how well an image matches the prompt using embeddings and cosine similarity."""
+    description = describe_image(image_url)
+    prompt_emb = embed_text(prompt)
+    desc_emb = embed_text(description)
+    score = cosine_similarity(prompt_emb, desc_emb) * 10  # Score 0–10
+    return max(0, min(10, score))
+
 # ------------------------------------------------------------
-# Pipeline: Generiert mehrere Bilder, gibt besten Link zurück
+# Pipeline: Generiert mehrere Bilder, bewertet sie und wählt das beste
 # ------------------------------------------------------------
 def image_gen_pipeline(article_summary: str, num_images: int = 2) -> str:
     prompt = generate_image_prompt(article_summary)
@@ -68,13 +96,11 @@ def image_gen_pipeline(article_summary: str, num_images: int = 2) -> str:
     for i in range(num_images):
         image_url = generate_image(prompt)
         images.append(image_url)
-        # Optional: einfache Bewertung (z.B. zufällig oder Embeddings)
-        ratings.append(1)  # placeholder: gleiche Bewertung
+        rating = rate_image(prompt, image_url)
+        ratings.append(rating)
 
-    # Bestes Bild auswählen (hier einfach das erste, da Bewertung placeholder)
     best_index = ratings.index(max(ratings))
     best_image_url = images[best_index]
-
     return best_image_url
 
 # ------------------------------------------------------------
@@ -96,10 +122,7 @@ class ImageGenerationTool(Tool):
         super().__init__()
 
     def forward(self, article_summary: str) -> str:
-        # Gibt direkt den Link zurück
-        best_image_url = image_gen_pipeline(article_summary)
-        return best_image_url
-
+        return image_gen_pipeline(article_summary)
 
 # ------------------------------------------------------------
 # Beispiel für Nutzung
