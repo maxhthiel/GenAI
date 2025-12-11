@@ -59,7 +59,7 @@ def run_safe_pipeline(agent, user_input):
     response = agent.run(user_input, reset=True)
     
     # 2. Evaluation Loop (Max 2 retries to prevent infinite loops)
-    max_retries = 2
+    max_retries = 3
     
     for attempt in range(max_retries):
         # Convert response to string just in case it returns an object

@@ -73,7 +73,7 @@ def build_agent():
         model=model,
         add_base_tools=False, 
         additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64", "plotly"],
-        max_steps=12,
+        max_steps=5,
         verbosity_level=1
     )
     
