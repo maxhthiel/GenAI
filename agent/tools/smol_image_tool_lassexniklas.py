@@ -53,21 +53,23 @@ class ImageGenerationTool(Tool):
         return result.data[0].url
 
     def forward(self, company_name: str):
+        # CSV laden
         df = pd.read_csv(self.csv_path)
 
+        # Zeile für die Firma finden
         row_idx = df.index[df['Company'] == company_name].tolist()
         if not row_idx:
             return f"Company '{company_name}' not found!"
         row_idx = row_idx[0]
 
+        # News Summary abrufen
         summary = df.at[row_idx, 'News Summary']
         if pd.isna(summary) or summary.strip() == "":
             return f"No summary for '{company_name}' available!"
 
+        # Bildprompt generieren
         prompt = self.generate_image_prompt(summary)
+
+        # Bild generieren und Link zurückgeben
         image_url = self.generate_image(prompt)
-
-        df.at[row_idx, 'Image_URL'] = image_url
-        df.to_csv(self.csv_path, index=False)
-
         return image_url
