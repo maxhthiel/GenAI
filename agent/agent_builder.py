@@ -1,17 +1,32 @@
+"""
+Agent Builder Module.
+
+This module is responsible for constructing and configuring the autonomous
+financial agent ('Smol-Quant'). It integrates various tools (RAG, EDA, Image Generation)
+into a cohesive CodeAgent architecture. The builder applies a specific persona
+and set of operational protocols via prompt injection to ensure the agent adheres
+to financial analysis standards and safety guidelines.
+"""
+
 import os
 from dotenv import load_dotenv
 from smolagents import CodeAgent, OpenAIModel
 
-# Import your custom tools
-# Ensure these files are in your Python path
+# Import custom tool implementations.
+# These tools provide specific capabilities: RAG for text, EDA for structured data,
+# and Image Generation for visual sentiment analysis.
 from agent.tools.smol_rag_tool_niklas import RAGGraphTool
 from agent.tools.smol_eda_tool_max import EDASummaryTool
 from agent.tools.smol_image_tool_lasse import ImageGenerationTool
 
+# Load environment variables (e.g., API keys)
 load_dotenv()
 
-# --- THE PERSONA (SYSTEM PROMPT) ---
-# This defines the "brain" and personality of your agent.
+# --- SYSTEM PROMPT DEFINITION ---
+# This constant defines the cognitive framework for the agent. It effectively
+# programs the 'Persona' and the 'Operating Procedures' of the LLM.
+# It uses a structured approach (Role, Tools, Protocols, Execution Plan) to
+# minimize hallucinations and ensure compliance.
 SMOL_QUANT_PROMPT = """
 You are 'Smol-Quant', an elite, autonomous financial analyst agent.
 Your goal is to provide deep, data-driven market insights using a ReAct (Reasoning + Acting) approach.
@@ -64,33 +79,54 @@ Your goal is to provide deep, data-driven market insights using a ReAct (Reasoni
 """
 
 def build_agent():
-    # 1. Model
+    """
+    Constructs and configures the Smol-Quant CodeAgent.
+
+    This function initializes the LLM engine, instantiates the necessary tools
+    with their correct file paths, and configures the agent's authorized imports
+    and system prompts.
+
+    Returns:
+        CodeAgent: An initialized agent instance ready for execution.
+    """
+    
+    # 1. Initialize the Model (The Reasoning Engine)
+    # GPT-4o-mini is chosen for a balance of speed and code-generation capability.
     model = OpenAIModel(
         model_id="gpt-4o-mini", 
         api_key=os.getenv("OPENAI_API_KEY")
     )
 
-    # 2. Tools
+    # 2. Instantiate Tools
+    # Note: Paths must be relative to the project root where execution occurs.
     rag_tool = RAGGraphTool(chroma_path="./data/chroma_db")
     eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
     image_tool = ImageGenerationTool()
 
-    # 3. Agent
-    # FIX: 'system_prompt' aus dem Konstruktor entfernt, da es den Fehler verursachte
+    # 3. Build the Agent
+    # We use CodeAgent to allow the LLM to write and execute Python code directly.
     agent = CodeAgent(
         tools=[rag_tool, eda_tool, image_tool], 
         model=model,
-        add_base_tools=False, 
-        additional_authorized_imports=["pandas", "matplotlib", "seaborn", "numpy", "io", "base64", "plotly", "matplotlib.pyplot"],
-        max_steps=5,
+        add_base_tools=False, # Disable default tools (e.g., web search) to enforce strict tool usage.
+        # Whitelist libraries to allow data manipulation and plotting within the sandbox.
+        additional_authorized_imports=[
+            "pandas", 
+            "matplotlib", 
+            "seaborn", 
+            "numpy", 
+            "io", 
+            "base64", 
+            "plotly", 
+            "matplotlib.pyplot"
+        ],
+        max_steps=5, # Limit execution steps to prevent infinite loops.
         verbosity_level=1
     )
     
-   # --- FIX FÜR DEN SYSTEM PROMPT ---
-    # Wir greifen direkt auf das Template-Dictionary zu, wie die Fehlermeldung es verlangt hat.
-    # WICHTIG: Wir holen den originalen Prompt und kleben unsere Persona DAVOR.
-    # Würden wir ihn ersetzen, wüsste der Agent nicht mehr, wie er Code schreiben soll.
-    
+    # 4. Inject System Prompt (Prompt Engineering)
+    # We access the internal prompt template to prepend our custom persona
+    # while preserving the agent's base instructions for code generation.
     original_prompt = agent.prompt_templates.get("system_prompt", "")
     agent.prompt_templates["system_prompt"] = SMOL_QUANT_PROMPT + "\n\n" + original_prompt
 
