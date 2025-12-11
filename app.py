@@ -88,8 +88,12 @@ def run_agent_process(query):
     
     try:
         # 1. Initialer Gedanke
-        status.write("🔍 Gathering financial data & news...")
-        response = agent.run(query, reset=True)
+        status.write("🧠 Planning analysis steps...")
+        
+        # --- CHANGE IS HERE: reset=False ---
+        # Der Agent behält jetzt sein Gedächtnis über alle Fragen hinweg.
+        response = agent.run(query, reset=False)
+        
         final_response_text = str(response)
         
         # 2. Compliance Loop (Max 2 Retries)
@@ -105,7 +109,9 @@ def run_agent_process(query):
             # Fehlerfall
             status.write(f"⚠️ Adjustment needed: {check['feedback']}")
             correction_prompt = f"Your answer was rejected. Reason: {check['feedback']}. Please rewrite it strictly."
-            response = agent.run(correction_prompt, reset=False) # Memory behalten!
+            
+            # Auch hier reset=False, damit er weiß, was er gerade falsch gemacht hat
+            response = agent.run(correction_prompt, reset=False) 
             final_response_text = str(response)
 
         status.update(label="⚠️ Finished with Warnings", state="error", expanded=False)
