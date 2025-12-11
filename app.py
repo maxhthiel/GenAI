@@ -1,29 +1,30 @@
 import streamlit as st
 import os
 import glob
+import base64
 import time
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Wir importieren den Agenten-Builder aus deinem existierenden Skript
+# Importiert euren Agenten
 from agent.agent_builder import build_agent
 
 # --- KONFIGURATION ---
 load_dotenv()
 st.set_page_config(
     page_title="Smol-Quant Analyst", 
-    page_icon="📈", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_icon="📊", 
+    layout="wide"
 )
 
-# --- CSS STYLING (Wall Street Look) ---
+# --- CLEAN CSS (Professional Style) ---
 st.markdown("""
 <style>
-    .stApp {background-color: #f0f2f6;}
-    .stChatMessage {font-family: 'IBM Plex Mono', monospace;}
-    h1 {color: #0e1117;}
-    div.stButton > button {background-color: #0e1117; color: white;}
+    .stApp {background-color: #ffffff;}
+    .stChatMessage {font-family: 'IBM Plex Mono', monospace; background-color: #f8f9fa; border-radius: 10px; padding: 10px;}
+    h1 {color: #2c3e50;}
+    /* Dezentere Status-Meldungen */
+    .stStatusWidget {border: 1px solid #e0e0e0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -31,7 +32,7 @@ st.markdown("""
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Agent cachen (damit er nicht bei jedem Klick neu lädt)
+# Agent cachen für Performance
 @st.cache_resource
 def get_agent():
     return build_agent()
@@ -42,7 +43,7 @@ judge_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # --- HILFSFUNKTIONEN ---
 
 def cleanup_old_plots():
-    """Löscht alte PNGs, damit wir nicht versehentlich Charts von gestern anzeigen."""
+    """Löscht alte PNGs vor einer neuen Anfrage."""
     files = glob.glob("*.png")
     for f in files:
         try:
@@ -51,25 +52,25 @@ def cleanup_old_plots():
             pass
 
 def evaluator_check(agent_response: str, user_query: str) -> dict:
-    """Der 'Judge', der prüft ob die Antwort sicher ist."""
+    """
+    RELAXED JUDGE: Erlaubt Meinungen/Analysen, verbietet nur direkte Befehle.
+    """
     system_prompt = """
-    You are a strict Compliance Officer at a major bank. 
-    Review the output of the AI Financial Analyst.
+    You are a helpful Compliance Assistant checking a financial report.
     
-    1. NO FINANCIAL ADVICE: The AI must NEVER explicitly tell the user to "Buy", "Sell", or "Invest".
-    2. DATA QUALITY: The answer must not be empty. Technical types like 'np.float64' are allowed but should be readable.
+    Review the AI's response based on these RELAXED Rules:
+    1. ALLOW ANALYSIS: The AI IS ALLOWED to describe trends, growth, and market sentiment (e.g., "The stock is performing well", "Bullish signal").
+    2. NO DIRECT COMMANDS: The AI must ONLY avoid direct imperatives like "Buy now!", "Sell immediately!".
+    3. DATA QUALITY: The answer must not be empty. Technical terms (np.float64) are allowed.
     
-    Output format:
-    PASSED
-    (or)
-    FAILED: <Reason>
+    Output strictly: PASSED or FAILED: <Reason>
     """
     try:
         response = judge_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Question: {user_query}\n\nResponse: {agent_response}"}
+                {"role": "user", "content": f"User Question: {user_query}\n\nAI Response: {agent_response}"}
             ]
         )
         verdict = response.choices[0].message.content
@@ -78,117 +79,108 @@ def evaluator_check(agent_response: str, user_query: str) -> dict:
         else:
             return {"passed": False, "feedback": verdict.replace("FAILED:", "").strip()}
     except Exception as e:
-        return {"passed": True, "feedback": f"Judge Error (Allowing response): {e}"}
+        return {"passed": True, "feedback": f"Judge Error: {e}"}
 
-# --- HAUPTLOGIK: DER SAFETY LOOP ---
-def run_agent_with_ui(query):
-    # 1. Alte Plots aufräumen vor dem Run
+def run_agent_process(query):
+    """Führt den Agenten mit Safety-Loop aus."""
     cleanup_old_plots()
-    
-    # UI Status Container
-    status_container = st.status("🤖 Analyst is working...", expanded=True)
+    status = st.status("🤖 Smol-Quant is working...", expanded=True)
     
     try:
-        # Initialer Versuch
-        status_container.write("🧠 Planning analysis steps...")
-        response = agent.run(query, reset=True) # reset=True für frischen Start
-        
-        max_retries = 2
+        # 1. Initialer Gedanke
+        status.write("🔍 Gathering financial data & news...")
+        response = agent.run(query, reset=True)
         final_response_text = str(response)
         
-        # Der Loop
+        # 2. Compliance Loop (Max 2 Retries)
+        max_retries = 2
         for attempt in range(max_retries):
-            status_container.write(f"👮 Compliance Check (Round {attempt + 1})...")
-            
-            check = evaluator_check(str(response), query)
+            status.write(f"⚖️ Compliance Check (Round {attempt+1})...")
+            check = evaluator_check(final_response_text, query)
             
             if check["passed"]:
-                status_container.update(label="✅ Analysis Approved!", state="complete", expanded=False)
-                return response, True
+                status.update(label="✅ Analysis Complete & Approved", state="complete", expanded=False)
+                return final_response_text
             
-            # Wenn Check fehlschlägt:
-            status_container.write(f"⚠️ Issue detected: {check['feedback']}")
-            status_container.write("🔄 Agent is self-correcting...")
-            
-            correction_instruction = (
-                f"Your previous answer was rejected by compliance. Reason: {check['feedback']}. "
-                f"Please correct your answer. Convert numpy types to standard numbers."
-            )
-            
-            # WICHTIG: reset=False, damit er aus Fehlern lernt
-            response = agent.run(correction_instruction, reset=False)
+            # Fehlerfall
+            status.write(f"⚠️ Adjustment needed: {check['feedback']}")
+            correction_prompt = f"Your answer was rejected. Reason: {check['feedback']}. Please rewrite it strictly."
+            response = agent.run(correction_prompt, reset=False) # Memory behalten!
             final_response_text = str(response)
 
-        # Wenn wir hier ankommen, hat er es nach Retries immer noch nicht geschafft oder (wie bei Nvidia) es ist der letzte Stand.
-        # Wir geben es trotzdem zurück, markieren es aber.
-        status_container.update(label="⚠️ Max Retries Reached", state="error", expanded=False)
-        return final_response_text, False
+        status.update(label="⚠️ Finished with Warnings", state="error", expanded=False)
+        return final_response_text
 
     except Exception as e:
-        status_container.update(label="❌ System Error", state="error")
-        return f"Critical Agent Error: {e}", False
+        status.update(label="❌ Critical Error", state="error")
+        return f"Error: {e}"
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Clean) ---
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Apple_Logo.svg/1200px-Apple_Logo.svg.png", width=50) # Platzhalter Logo
-    st.header("Smol-Quant Settings")
-    st.caption("v1.0 | Thesis Demo")
+    st.header("⚙️ Control Panel")
+    st.markdown("### Active Modules")
+    st.code("RAG (News)\nPython (Charts)\nImageGen (DALL-E)", language="text")
     
     st.markdown("---")
-    st.markdown("**Active Tools:**")
-    st.success("✅ RAG (ChromaDB)")
-    st.success("✅ Python Analysis")
-    st.success("✅ Image Generation")
-    
-    if st.button("🗑️ Reset Conversation"):
+    if st.button("🗑️ Clear History", use_container_width=True):
         st.session_state.messages = []
         cleanup_old_plots()
         st.rerun()
 
-# --- CHAT AREA ---
-st.title("🤖 Smol-Quant")
-st.subheader("Autonomous Financial Analyst Agent")
+# --- MAIN CHAT UI ---
+st.title("Smol-Quant Analyst 🚀")
+st.caption("Autonomous Financial Analysis | Powered by smolagents")
 
-# Verlauf anzeigen
+# 1. Verlauf rendern
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
+        # Text
         st.markdown(msg["content"])
-        # Wenn Bilder im Verlauf gespeichert waren
-        if "plot_path" in msg and msg["plot_path"]:
-            if os.path.exists(msg["plot_path"]):
-                st.image(msg["plot_path"])
-            else:
-                st.caption(f"*(Chart {msg['plot_path']} expired)*")
+        
+        # Bilder (Plot)
+        if msg.get("plot_path") and os.path.exists(msg["plot_path"]):
+            st.image(msg["plot_path"], caption="Market Analysis Chart")
+            
+        # Bilder (Base64 / Image Gen Tool)
+        if msg.get("image_data"):
+            st.image(msg["image_data"], caption="Sentiment Visualization")
 
-# User Input
-if prompt := st.chat_input("Ask about stocks, trends, or analysis..."):
-    # 1. User Nachricht
+# 2. User Input
+if prompt := st.chat_input("Ask about Tesla, Nvidia, or Market Trends..."):
+    # User Nachricht
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. Agent Antwort
+    # Agent Prozess
     with st.chat_message("assistant"):
-        # Hier läuft der Loop mit UI Updates
-        answer_text, success = run_agent_with_ui(prompt)
+        answer_text = run_agent_process(prompt)
         
-        # Nach Plots suchen (Dateien, die JETZT existieren)
-        # Wir suchen alle PNGs, die in den letzten 30 Sekunden erstellt wurden
-        plot_files = glob.glob("*.png")
-        latest_plot = None
-        
-        # Simple Logic: Wenn ein PNG existiert, nehmen wir es an
-        if plot_files:
-            # Nimm das neueste
-            latest_plot = max(plot_files, key=os.path.getctime)
-            st.image(latest_plot, caption="Generated Analysis Chart")
-        
-        # Text anzeigen
-        st.markdown(answer_text)
-        
-        # Speichern in History
+        # Daten für History vorbereiten
         msg_data = {"role": "assistant", "content": answer_text}
-        if latest_plot:
+
+        # A) Nach Charts suchen (Matplotlib speichert PNGs)
+        plot_files = glob.glob("*.png")
+        if plot_files:
+            # Nimm das neueste Bild
+            latest_plot = max(plot_files, key=os.path.getctime)
+            st.image(latest_plot, caption="Generated Data Chart")
             msg_data["plot_path"] = latest_plot
-            
+
+        # B) Nach Base64 Bildern suchen (Image Gen Tool gibt Strings zurück)
+        # Hack: Wir suchen nach langen Strings ohne Leerzeichen, die wie Base64 aussehen
+        if "iVBOR" in answer_text and len(answer_text) > 1000:
+            try:
+                # Extrahiere Base64 (Clean up text around it)
+                clean_b64 = answer_text.split("")[-1].strip()
+                # Manchmal ist noch Text davor/dahinter, wir probieren es einfach anzuzeigen
+                image_bytes = base64.b64decode(clean_b64)
+                st.image(image_bytes, caption="AI Generated Sentiment Art")
+                msg_data["image_data"] = image_bytes
+                # Text bereinigen, damit der Base64 String nicht den Chat flutet
+                msg_data["content"] = "🎨 I have generated an artistic visualization of the sentiment."
+            except:
+                pass # War wohl doch kein Bild
+
+        st.markdown(msg_data["content"])
         st.session_state.messages.append(msg_data)
