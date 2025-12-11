@@ -1,67 +1,68 @@
 # 🤖 Smol-Quant: Autonomous Financial Analyst Agent
 
+## 📖 Project Overview
+
+**Smol-Quant** is an autonomous agentic system designed to simulate the workflow of a junior financial analyst. Developed using the Hugging Face `smolagents` framework, it moves beyond standard text-prediction chatbots by actively executing code and interacting with disparate data sources.
+
+The system bridges the gap between quantitative financial analysis and qualitative market research by integrating three core capabilities:
+
+1.  **Code Execution:** Autonomous generation and execution of Python scripts for statistical analysis and visualization.
+2.  **Semantic Search (RAG):** Retrieval of unstructured qualitative data (news, reports) via vector database querying.
+3.  **Visual Synthesis:** Generation of visual representations for market sentiment using generative AI.
+
 ## 📂 Project Structure
 
-This is how the project is organized. The **Agent** logic sits in the `agent/` folder, while all **Data** (both raw CSV and the Vector Database) resides in `data/`.
+The project follows a modular architecture, separating agent logic, tool definitions, and data storage.
 
 ```text
 GenAI/
 ├── agent/
-│   ├── agent_builder.py    # The blueprint: Configures the Agent and assigns Tools
-│   └── tools/              # The capabilities
-│       ├── smol_rag_tool.py   # Tool for searching internal documents
-│       └── smol_eda_tool.py   # Tool for analyzing the CSV dataset
+│   ├── agent_builder.py       # Configuration: Assembles the Agent, Persona, and Tools
+│   └── tools/                 # Tool Definitions
+│       ├── smol_rag_tool.py   # Interface for ChromaDB (News/Text Retrieval)
+│       ├── smol_eda_tool.py   # Interface for Pandas DataFrames (Quantitative Analysis)
+│       └── smol_image_tool.py # Interface for Generative Image Models (Visuals)
 ├── data/
-│   ├── chroma_db/          # The Vector Database (Knowledge Base)
-│   └── nasdaq_100...csv    # Raw Financial Data
-├── main.py                 # The Entry Point (Run this file)
-└── .env                    # Configuration (API Keys)
-````
+│   ├── chroma_db/             # Vector Database (Persisted Embeddings)
+│   └── nasdaq_100...csv       # Structured Financial Dataset
+├── main.py                    # Entry Point (CLI / Pipeline Execution)
+├── app.py                     # Entry Point (Streamlit Web Interface)
+└── .env                       # Environment Configuration (API Keys)
+```
 
------
+## 🏗️ Technical Architecture
 
-## 📖 Project Overview
+The system utilizes a **ReAct (Reasoning + Acting)** pattern, orchestrated by a central code-generating LLM.
 
-**Smol-Quant** is a GenAI-powered agent designed to simulate a junior financial analyst. Unlike standard chatbots that only predict text, Smol-Quant operates as an **agentic system**.
+### 1\. The Core: `CodeAgent`
 
-It bridges the gap between quantitative data analysis and qualitative news research by combining:
+Acting as the central orchestrator, the `CodeAgent` does not merely output text. It plans a sequence of actions, generates Python code to execute those actions, and interprets the execution results to formulate a final response.
 
-1.  **Code Execution:** The agent writes and runs real Python code to calculate metrics from data.
-2.  **Semantic Search (RAG):** The agent "reads" internal news and reports using a vector database.
-3.  **Autonomous Reasoning:** It breaks down complex user questions into logical steps (Plan -\> Execute -\> Answer).
+### 2\. The Toolset
 
------
+The agent is equipped with specialized tools to handle different data modalities:
 
-## 🏗️ Technical Architecture (Simplified)
+  * **Quantitative Analysis Tool (`EDASummaryTool`):**
 
-Think of the architecture as a **Brain** equipped with specialized **Tools**.
+      * **Function:** Provides metadata and access paths for the underlying CSV dataset.
+      * **Mechanism:** Enables the agent to write native `pandas` and `matplotlib` code to perform filtering, aggregation, and visualization of financial metrics (e.g., PE Ratio, Volatility).
 
-### 1\. The Brain: `CodeAgent` (Orchestrator)
+  * **Qualitative Research Tool (`RAGQueryTool`):**
 
-We use the **Hugging Face `smolagents` framework**.
+      * **Function:** Retrieves context-aware text segments from internal documents.
+      * **Mechanism:** Utilizes **ChromaDB** for semantic search. User queries are converted into vector embeddings (`text-embedding-3-small`) to retrieve the most relevant news snippets and business summaries.
 
-  * Instead of just answering with text, this agent thinks in **Python**.
-  * When you ask a question, the "Brain" writes a Python script to solve it, executes that script securely, and observes the result.
+  * **Visual Synthesis Tool (`ImageGenerationTool`):**
 
-### 2\. The Tools (Capabilities)
+      * **Function:** Visualizes abstract concepts such as market sentiment.
+      * **Mechanism:** Uses an LLM to refine prompts based on retrieved news, which are then passed to a diffusion model (DALL-E 3) to generate illustrative imagery.
 
-The agent has access to two primary sources of truth:
+## ⚙️ Installation & Setup
 
-  * **The "Analyst" Tool (`EDASummaryTool`):**
+### Prerequisites
 
-      * **What it does:** Gives the agent direct access to the `pandas` DataFrame containing stock prices, PE ratios, and volatility.
-      * **How it works:** The agent writes pandas code (e.g., `df.groupby('Sector').mean()`) to answer quantitative questions accurately.
-
-  * **The "Researcher" Tool (`RAGQueryTool`):**
-
-      * **What it does:** Allows the agent to search through thousands of text snippets (News, Business Summaries).
-      * **How it works:** It uses **ChromaDB** (Vector Database). Your question is converted into a mathematical vector (`text-embedding-3-small`), and the database returns the most relevant text segments (Semantic Search).
-
------
-
-## ⚙️ Setup & Run
-
-Follow these steps to start the agent.
+  * Python 3.10+
+  * OpenAI API Key
 
 ### 1\. Clone Repository
 
@@ -70,14 +71,14 @@ git clone <repo-url>
 cd GenAI
 ```
 
-### 2\. Create & Activate Virtual Environment
+### 2\. Environment Setup
 
-We use a clean environment named `genai`.
+It is recommended to use a virtual environment.
 
 **macOS / Linux:**
 
 ```bash
-python -m venv genai
+python3 -m venv genai
 source genai/bin/activate
 ```
 
@@ -88,46 +89,59 @@ python -m venv genai
 genai\Scripts\activate
 ```
 
-### 3\. Configure API Keys
+### 3\. Dependencies
 
-Create a file named `.env` in the root folder and add your OpenAI credentials:
+Install the required packages:
 
-```ini
-# .env file
-OPENAI_API_KEY=sk-proj-xxxxxx...
-OPENAI_MODEL=gpt-4o
+```bash
+pip install -r requirements.txt
 ```
 
-### 4\. Run the Agent
+### 4\. Configuration
 
-Everything is pre-configured. Start the terminal interface:
+Create a `.env` file in the root directory:
+
+```ini
+OPENAI_API_KEY=sk-proj-xxxxxx...
+OPENAI_MODEL=gpt-4o-mini
+```
+
+## 🚀 Usage
+
+The system can be run in two modes:
+
+### A. Terminal Interface (CLI)
+
+Best for debugging and viewing the raw "thought process" of the agent.
 
 ```bash
 python main.py
 ```
 
------
+### B. Web Interface (Streamlit)
 
-## 🚀 Usage Guide
+Provides a user-friendly chat interface with rendered charts and images.
 
-Once the terminal interface is running, you can interact naturally. The agent automatically decides whether to calculate numbers or search for text.
-
-**Examples:**
-
-  * **Quantitative Question (Agent writes code):**
-
-    > "Analyze the dataset. Which company has the highest volatility?"
-    > "Calculate the average PE Ratio of the Tech sector."
-
-  * **Qualitative/RAG Question (Agent searches DB):**
-
-    > "Nutze die interne Datenbank. Was sind die aktuellen News zu Nvidia?"
-    > "Why is the sentiment for Apple negative?"
-
-  * **Combined Reasoning:**
-
-    > "First check the volatility of Tesla, then find reasons for it in the news."
-
-
+```bash
+streamlit run app.py
 ```
-```
+
+### Example Queries
+
+  * **Quantitative Analysis:**
+
+    > "Compare the volatility of Tesla and Nvidia over the last year."
+    > "Plot the PE Ratio distribution of the Tech sector."
+
+  * **Qualitative Research (RAG):**
+
+    > "What are the recent strategic challenges for Apple?"
+    > "Summarize the latest news regarding Microsoft's AI investments."
+
+  * **Hybrid Reasoning:**
+
+    > "First, analyze the market cap of Meta. Then, check the latest news to explain recent price movements."
+
+  * **Visual Generation:**
+
+    > "Visualize the current market sentiment for the semiconductor industry."
