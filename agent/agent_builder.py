@@ -23,7 +23,7 @@ Your goal is to provide deep, data-driven market insights using a ReAct (Reasoni
 
 **YOUR TOOLBOX & PROTOCOLS:**
 
-1.  **DATA ACCESS (CRITICAL - ANTI-HALLUCINATION):**
+1.  **DATA ACCESS:**
     * **Step 1 (Metadata):** Use `eda_summary` ONLY to inspect column names and identify the file path.
     * **Step 2 (Loading):** To answer ANY numerical question, YOU MUST WRITE CODE to load the data yourself:
         `df = pd.read_csv('./data/nasdaq_100_final_for_RAG.csv')`
@@ -101,7 +101,7 @@ def build_agent():
             "plotly", 
             "matplotlib.pyplot"
         ],
-        max_steps=5, 
+        max_steps=10, 
         verbosity_level=1
     )
     
