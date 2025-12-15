@@ -15,8 +15,8 @@ from smolagents import CodeAgent, OpenAIModel
 # Import custom tool implementations.
 # These tools provide specific capabilities: RAG for text, EDA for structured data,
 # and Image Generation for visual sentiment analysis.
-from agent.tools.smol_rag_tool_niklas import RAGGraphTool
-from agent.tools.smol_eda_tool_max import EDASummaryTool
+from agent.tools.smol_rag_tool import RAGGraphTool
+from agent.tools.smol_eda_tool import EDASummaryTool
 from agent.tools.smol_image_tool_lasse import ImageGenerationTool
 
 # Load environment variables (e.g., API keys)

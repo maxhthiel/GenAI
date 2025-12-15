@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 from smolagents import CodeAgent, OpenAIModel
 
 # Import custom tools
-from agent.tools.smol_rag_tool_niklas import RAGGraphTool
-from agent.tools.smol_eda_tool_max import EDASummaryTool
-from agent.tools.smol_image_tool_lassexniklas import ImageGenerationTool
+from agent.tools.smol_rag_tool import RAGGraphTool
+from agent.tools.smol_eda_tool import EDASummaryTool
+from agent.tools.smol_image_tool import ImageGenerationTool
 
 # Load environment variables (API keys)
 load_dotenv()
