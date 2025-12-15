@@ -1,16 +1,15 @@
 """
 Smol-Quant Terminal Interface & Safety Pipeline.
 
-This script serves as the main entry point for the terminal-based interaction
-with the Smol-Quant financial agent. It implements a 'Human-in-the-loop' style
-architecture (replaced here by an LLM Evaluator) to ensure compliance with
-financial regulations before displaying answers to the user.
+This script acts as the primary entry point for the terminal-based interaction
+with the Smol-Quant financial agent. It implements a safety-critical architecture
+utilizing an LLM-based Evaluator to enforce financial compliance before displaying
+results to the user.
 
 Key Features:
-1.  **LLM-as-a-Judge:** A secondary LLM validates agent outputs against compliance rules.
-2.  **Self-Correction Loop:** If validation fails, the agent is fed the feedback 
-    and asked to retry without losing conversation context.
-3.  **Stateful Agent:** Manages conversation history via the smolagents framework.
+1.  **LLM-as-a-Judge:** A distinct LLM instance validates agent outputs against strict compliance rules.
+2.  **Self-Correction Loop:** Upon validation failure, feedback is injected back into the agent's context, triggering an autonomous retry.
+3.  **Stateful Orchestration:** Manages the conversation history and tool execution via the smolagents framework.
 """
 
 import logging
@@ -25,20 +24,18 @@ from agent.agent_builder import build_agent
 # Load environment variables (API keys, configuration)
 load_dotenv()
 
-# Configure Logging
-# INFO level is sufficient for tracking the conversation flow and tool usage
+# Configure logging to track conversation flow and tool usage at the INFO level
 logging.basicConfig(level=logging.INFO)
 
-# Initialize a separate OpenAI client for the Evaluator (Judge).
-# This ensures the safety check is decoupled from the agent's internal logic.
+# Instantiate a dedicated client for the Evaluator to decouple safety checks from agent logic
 judge_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def evaluator_check(agent_response: str, original_question: str) -> dict:
     """
-    Implements the 'LLM-as-a-Judge' pattern to validate agent responses.
+    Validates agent outputs using the 'LLM-as-a-Judge' pattern.
 
-    This function uses a smaller, efficient model (GPT-4o-mini) to act as a 
-    Compliance Officer. It checks for two specific criteria:
+    Uses GPT-4o-mini acting as a Compliance Officer to
+    audit responses for:
     1. Financial Advice violations (imperative commands).
     2. Data Quality issues (hallucinations or empty responses).
 
@@ -49,10 +46,9 @@ def evaluator_check(agent_response: str, original_question: str) -> dict:
     Returns:
         dict: A dictionary containing:
             - 'passed' (bool): True if the response is compliant.
-            - 'feedback' (str): Explanation of failure if applicable.
+            - 'feedback' (str): Detailed explanation of failure if applicable.
     """
-    # System prompt defining the rules for the evaluator.
-    # Note: Rules are 'relaxed' to allow analysis but forbid explicit directives.
+    # Define compliance rules for the evaluator, permitting analysis but forbidding directives
     system_prompt = """
     You are a helpful Compliance Assistant checking a financial report.
     
@@ -69,7 +65,7 @@ def evaluator_check(agent_response: str, original_question: str) -> dict:
     """
     
     try:
-        # Execute the judgment call
+        # Invoke the evaluator model
         response = judge_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -84,22 +80,20 @@ def evaluator_check(agent_response: str, original_question: str) -> dict:
         if "PASSED" in verdict:
             return {"passed": True, "feedback": ""}
         else:
-            # Extract the reason for failure to feed back into the agent
+            # Extract the rejection reason for the feedback loop
             return {"passed": False, "feedback": verdict.replace("FAILED:", "").strip()}
             
     except Exception as e:
-        # Fallback mechanism: If the judge fails, default to passing to prevent system lockup.
+        # specific fallback to prevent system lockup on evaluator failure
         return {"passed": True, "feedback": f"Judge Error (Passed by default): {e}"}
 
 def run_safe_pipeline(agent, user_input: str) -> str:
     """
-    Executes the agent's logic wrapped in a self-correction loop.
+    Orchestrates the agent execution within a compliance-driven self-correction loop.
 
-    This function handles the multi-step process:
-    1. Agent generates an initial response.
-    2. Evaluator checks the response.
-    3. If rejected, the feedback is injected back into the agent's context 
-       (without resetting memory), allowing it to iteratively improve the answer.
+    1. Generates an initial response.
+    2. Evaluates the response against safety protocols.
+    3. If rejected, injects feedback into the agent's memory for iterative correction.
 
     Args:
         agent: The initialized CodeAgent instance.
@@ -110,68 +104,65 @@ def run_safe_pipeline(agent, user_input: str) -> str:
     """
     print(f"[Agent] Processing query...")
     
-    # 1. Initial Run
-    # reset=True ensures no interference from previous distinct queries (optional design choice)
+    # Execute initial query, reset=True clears prior context to ensure a fresh start 
     response = agent.run(user_input, reset=True)
     
-    # Define maximum attempts to prevent infinite loops during correction
+    # Set retry limit to prevent infinite correction loops
     max_retries = 3
     
     for attempt in range(max_retries):
-        # Convert response to string to handle potential object returns
+        # Ensure response is string-formatted for evaluation
         response_str = str(response)
         
-        # 2. Evaluation Step
+        # Assess compliance of the generated response
         evaluation = evaluator_check(response_str, user_input)
         
         if evaluation["passed"]:
-            return response # Exit loop and return successful response
+            print(f"Compliance Check Passed (Attempt {attempt+1})")
+            return response # Exit loop on success
         
-        # 3. Handling Failure
+        # Process failed validation
         print(f"\n[Warning] Compliance Alert (Attempt {attempt+1}/{max_retries}): {evaluation['feedback']}")
         print("[System] Initiating self-correction sequence based on feedback...")
         
-        # 4. Correction Run
-        # We construct a prompt containing the specific reason for rejection.
+        # Construct feedback prompt with specific rejection reasons
         correction_prompt = (
             f"Your previous answer was rejected by the Compliance Officer. "
             f"Reason: {evaluation['feedback']}. "
             f"Please rewrite your answer, strictly following the rules (Data only, no advice)."
         )
         
-        # IMPORTANT: reset=False preserves the history. The agent now 'knows' 
-        # it made a mistake and sees the specific feedback in its context window.
+        # Re-run agent with feedback. reset=False preserves context, enabling iterative improvement
         response = agent.run(correction_prompt, reset=False)
 
-    # Fallback if the agent fails to correct itself after max_retries
+    # Return fallback message if correction limit is reached
     return "[Error] I apologize, but I cannot provide a compliant answer to this query at the moment."
 
 def main():
     """
-    Main application entry point.
-    Initializes the agent and runs the interactive Read-Eval-Print Loop (REPL).
+    Application entry point.
+    Initializes the agent architecture and manages the interactive REPL session.
     """
     print("--------------------------------------------------")
-    print("Smol-Quant Terminal Interface (English Mode)")
+    print("Smol-Quant Terminal Interface")
     print("--------------------------------------------------")
     print("Loading Agent and Tools... please wait.")
     
     try:
-        # Build the agent architecture (RAG, EDA, ImageGen tools)
-        # This is a one-time initialization cost.
+        # Build the complete agent system (RAG, EDA, ImageGen). This is a one-time cost.
         agent = build_agent()
         print("[System] Ready. (Type 'exit' or 'quit' to close)")
     except Exception as e:
         print(f"[Critical Error] Failed to initialize agent: {e}")
         return
 
-    # Continuous interaction loop
+    # Main interaction loop
     while True:
         try:
             print("\n" + "="*50)
             user_input = input("You: ").strip()
 
-            # Exit conditions
+            # Handle exit commands
             if user_input.lower() in ["exit", "quit", "q"]:
                 print("[System] Session ended.")
                 break
@@ -179,13 +170,13 @@ def main():
             if not user_input:
                 continue
             
-            # Execute the pipeline (Generation + Evaluation + Correction)
+            # Execute the safe pipeline (Generation + Evaluation + Correction)
             final_response = run_safe_pipeline(agent, user_input)
 
             print(f"\n[Agent] Final Answer:\n{final_response}")
 
         except KeyboardInterrupt:
-            # Handle CTRL+C gracefully
+            # Graceful shutdown on CTRL+C
             print("\n[System] Aborted by user.")
             break
         except Exception as e:

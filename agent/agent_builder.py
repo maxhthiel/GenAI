@@ -1,32 +1,22 @@
 """
 Agent Builder Module.
 
-This module is responsible for constructing and configuring the autonomous
-financial agent ('Smol-Quant'). It integrates various tools (RAG, EDA, Image Generation)
-into a cohesive CodeAgent architecture. The builder applies a specific persona
-and set of operational protocols via prompt injection to ensure the agent adheres
-to financial analysis standards and safety guidelines.
+Constructs and configures the 'Smol-Quant' autonomous financial agent.
+Integrates RAG, EDA, and Image Generation tools into a CodeAgent architecture
+and applies operational protocols via system prompt injection.
 """
 
 import os
 from dotenv import load_dotenv
 from smolagents import CodeAgent, OpenAIModel
 
-# Import custom tool implementations.
-# These tools provide specific capabilities: RAG for text, EDA for structured data,
-# and Image Generation for visual sentiment analysis.
 from agent.tools.smol_rag_tool import RAGGraphTool
 from agent.tools.smol_eda_tool import EDASummaryTool
-from agent.tools.smol_image_tool_lasse import ImageGenerationTool
+from agent.tools.smol_image_tool import ImageGenerationTool
 
-# Load environment variables (e.g., API keys)
 load_dotenv()
 
-# --- SYSTEM PROMPT DEFINITION ---
-# This constant defines the cognitive framework for the agent. It effectively
-# programs the 'Persona' and the 'Operating Procedures' of the LLM.
-# It uses a structured approach (Role, Tools, Protocols, Execution Plan) to
-# minimize hallucinations and ensure compliance.
+# System prompt defining the agent's persona, tool usage protocols, and safety guidelines.
 SMOL_QUANT_PROMPT = """
 You are 'Smol-Quant', an elite, autonomous financial analyst agent.
 Your goal is to provide deep, data-driven market insights using a ReAct (Reasoning + Acting) approach.
@@ -62,7 +52,7 @@ Your goal is to provide deep, data-driven market insights using a ReAct (Reasoni
     * **Allowed Phrasing:** "The data indicates...", "Historical volatility is...", "Current sentiment is classified as..."
     * **Tone:** Professional, concise, data-focused.
 
-6.  **HYBRID RESPONSE STRATEGY (THE "PRO" MOVE):**
+6.  **HYBRID RESPONSE STRATEGY:**
     * If a user asks a general question (e.g., "What do you know about Tesla?", "Analyze Nvidia"), NEVER provide text only.
     * **ALWAYS** combine tools:
         1.  **RAG:** Get the business summary and news.
@@ -80,36 +70,27 @@ Your goal is to provide deep, data-driven market insights using a ReAct (Reasoni
 
 def build_agent():
     """
-    Constructs and configures the Smol-Quant CodeAgent.
-
-    This function initializes the LLM engine, instantiates the necessary tools
-    with their correct file paths, and configures the agent's authorized imports
-    and system prompts.
-
-    Returns:
-        CodeAgent: An initialized agent instance ready for execution.
+    Initializes the CodeAgent with specific tools, authorized imports, and the custom system prompt.
+    Returns: Configured CodeAgent instance.
     """
     
-    # 1. Initialize the Model (The Reasoning Engine)
-    # GPT-4o-mini is chosen for a balance of speed and code-generation capability.
+    # Initialize the reasoning engine (GPT-4o-mini)
     model = OpenAIModel(
         model_id="gpt-4o-mini", 
         api_key=os.getenv("OPENAI_API_KEY")
     )
 
-    # 2. Instantiate Tools
-    # Note: Paths must be relative to the project root where execution occurs.
+    # Initialize tools with relative file paths
     rag_tool = RAGGraphTool(chroma_path="./data/chroma_db")
     eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
     image_tool = ImageGenerationTool()
 
-    # 3. Build the Agent
-    # We use CodeAgent to allow the LLM to write and execute Python code directly.
+    # Configure the Agent to allow Python code execution
     agent = CodeAgent(
         tools=[rag_tool, eda_tool, image_tool], 
         model=model,
-        add_base_tools=False, # Disable default tools (e.g., web search) to enforce strict tool usage.
-        # Whitelist libraries to allow data manipulation and plotting within the sandbox.
+        add_base_tools=False, # Disable default tools to enforce strict adherence to custom tools
+        # Whitelist libraries for data manipulation and visualization
         additional_authorized_imports=[
             "pandas", 
             "matplotlib", 
@@ -120,13 +101,11 @@ def build_agent():
             "plotly", 
             "matplotlib.pyplot"
         ],
-        max_steps=5, # Limit execution steps to prevent infinite loops.
+        max_steps=5, 
         verbosity_level=1
     )
     
-    # 4. Inject System Prompt (Prompt Engineering)
-    # We access the internal prompt template to prepend our custom persona
-    # while preserving the agent's base instructions for code generation.
+    # Inject custom persona by prepending to the default system prompt
     original_prompt = agent.prompt_templates.get("system_prompt", "")
     agent.prompt_templates["system_prompt"] = SMOL_QUANT_PROMPT + "\n\n" + original_prompt
 
