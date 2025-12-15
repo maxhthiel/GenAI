@@ -27,8 +27,11 @@ def generate_image_prompt(article_summary: str) -> str:
             You will be presented with the summary of a news article.
             Your task is to generate a highly specific and visual prompt based on this summary.
             Generate only the prompt itself, no greetings or commentary.
-            Keep it concise (max 70 tokens).
-            Avoid real people, trademarks, companies, or geopolitical events."""},
+            Keep it concise (max 30 tokens).
+            Do not mention or reference any real-world people, companies, brands, trademarks, or geopolitical events.
+            Only use fictional names, organizations, locations, and events."""},
+            # I included this part because prompts with real company names usually resulted in very abstract images.
+            # With the "only fictional" prompt, the images seemed better.
             {"role": "user", "content": f"Article summary:\n{article_summary}\n\nGenerate an image prompt:"}
         ]
     )
@@ -54,7 +57,7 @@ def describe_image(image_url: str) -> str:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Describe this image in 1-2 concise sentences, focusing on key features."},
+                    {"type": "text", "text": "Describe this image in 1-2 concise sentences. Only focus on key features, do not exceed 50 tokens."},
                     {"type": "image_url", "image_url": {"url": image_url}}
                 ]
             }
