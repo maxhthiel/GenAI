@@ -1,104 +1,33 @@
-This is our TODO list:
-# 📝 Projekt-Fahrplan: Smol-Quant
+    ## To Dos: 
+    - Streamlit UI 
+        - lasst uns eine sehr simple und cleane UI bauen 
 
-## 1. Data Engineering (Datenbasis aufräumen)
+    - Saubere Read Me
+        - muss vor allem unsere Architektur und gesamtes Projekt erklären
 
-* **Skripte trennen:**
-    * Wir haben aktuell alles gemischt und nutzen Niklas' alte Jupyter Notebooks. Wir sollten zeigen, dass wir es für diesen Kurs selber gemacht haben.
-    * **Neu:** Ein Skript **`data_scraping.py`** (nur Wikipedia/Yahoo abfragen & CSV speichern).
-    * **Neu:** Ein Skript **`embeddings.py`** (nimmt die CSV & füllt die ChromaDB).
-    * *Ziel:* Wir können die DB neu bauen, ohne jedes Mal neu zu scrapen.
+    - gesamtes Repo aufräumen und schön machen
+        - Lasst uns einfach das gesamte Repo öffentlich machen und "abgeben" 
+        - das macht einen guten Eindruck, wir haben keinen Stress und ich habs in Cloud Computing bei Max auch so gemacht
 
-* **RAG-Code bereinigen:**
-    * Den alten Code für die RAG-Kette rauswerfen. Wir brauchen nur die Logik zum Scrapen und Embedden.
+    - mögliche Bonus Features:
+        - Advance Prompt Engineering
+            - zb Agent zerlegt User Prompt nochmal in kleinere / umformulierte Prompts
+        - Reranking
+            - Nachdem RAG Dokumente gefunden hat, sortiert ein zweiter Algorithmus die Ergebnisse nochmal nach Relevanz
+        - Agent Memory
+            - vielleicht ist das einfach zu implementieren
+            - muss aber ordentlich getestet werden
+        - einfache Containarization 
+            - wir könnten einfach ne Dokkerfile machen, die unsere streamlit app lädt 
+        - Custom Evaluation Metriken 
+            - könnten zb 5 Test Fragen definieren (zb was ist wert von Tesla oder so)
+            - uns das in einem eigenen Skript durchlaufen lassen und testen
+        - Chain-of-Thought Visualization
+            - das müsste in streamlit eigentlich easy visualisierbar sein 
+            - also diesen denkprozess wie er im terminal auch sichtbar ist in streamlit visualisieren
 
-* **Datenmenge vergrößern (später):**
-    * Die aktuelle VectorDB ist noch zu klein.
-    * *Aufgabe:* Mehr News-Artikel scrapen (längerer Zeitraum?), damit der Agent bei RAG auch wirklich was findet.
+    - alle müssen ihre Skripte hübsch machen
+        - also guter und ordentlicher DRY code
+        - gute Doku (zb Inline Kommis oder gute Docstrings)
 
----
-
-## 2. Agent & Tools (Das Gehirn)
-
-* **Tools komplexer machen:**
-    * **`eda_tool`**: Soll nicht nur `describe()` ausgeben. Der Agent muss gezielt Spalten filtern, **Gruppen bilden** und **Plots** speichern können.
-    * **`rag_tool`**: Muss sauberer zurückgeben, wenn er *nichts* findet (damit der Agent nicht halluziniert).
-
-* **Agent "schlauer" machen (Decision Making):**
-    * Er muss lernen: Für "Zahlen" $\rightarrow$ nimm CSV. Für "Gründe/News" $\rightarrow$ nimm RAG.
-    * Aktuell vermischt er das manchmal oder rät.
-
----
-
-## 3. Image Generation (Visualisierung)
-
-* **Tool-Integration (DALL-E 3):**
-    * Das `ImageGenTool` steht im Code, muss aber robust getestet werden.
-    * *Aufgabe:* Sicherstellen, dass der API-Key korrekt gezogen wird und Fehler (z.B. "Content Policy Violation" bei OpenAI) sauber abgefangen werden.
-
-* **Streamlit-Anbindung (Frontend):**
-    * Problem: Der Agent gibt aktuell oft nur die Bild-URL als Text zurück. Das sieht nicht gut aus.
-    * **Lösung:** Das Streamlit-Skript muss erkennen: "Aha, eine Bild-URL!" und das Bild direkt rendern (`st.image()`), statt nur den Link zu zeigen.
-
-* **Trigger-Logik (Kostenbremse):**
-    * Bilder generieren kostet Geld und dauert lange.
-    * **Regel:** Der Agent darf das Bild-Tool **nur** nutzen, wenn der User explizit danach fragt (z.B. "Generiere ein Bild zur Marktstimmung").
-    * Es darf *nicht* automatisch bei jeder Standard-Antwort passieren.
-
-
-### 4. UI & Präsentation (Die Sichtbarkeit)
-
-* **Streamlit UI bauen:**
-    * Das Terminal reicht nicht für die Abgabe.
-    * **Aufgabe:** Ein echtes Chat-Fenster bauen, das den Verlauf anzeigt (History).
-
-* **Image Generation (Bild-Tool):**
-    * Muss sauber in Streamlit integriert werden.
-    * **Regel:** Das Bild wird nur generiert, wenn der Nutzer es explizit im Prompt verlangt (kostet Geld/Zeit).
-
-* **Plot-Tool:**
-    * Wenn der Agent (EDA) einen Plot generiert (Mittelwerte, Kurven), muss dieser **als Grafik** in Streamlit angezeigt werden.
-    * *Aktuell:* Er speichert es nur als Datei ab, wir sehen es nicht direkt.
-
----
-
-### 5. Bonus-Features 
-
-* **LLM-as-a-Judge (Sicherheitscheck):**
-    * Ein **zweites, kleines LLM** prüft die finale Antwort, bevor sie rausgeht.
-    * **Check:** Stimmt die Antwort mit den Fakten überein?
-    * **Check:** Gibt der Agent illegale Finanzberatung? (Sicherheit $\rightarrow$ Punkte).
-
-* **Sandbox / Restricted Imports (Sicherheitsgurt):**
-    * **Problem:** Der Agent führt Python-Code aktuell direkt auf unseren Laptops aus. Das ist gefährlich (er könnte theoretisch Dateien löschen oder auf private Ordner zugreifen).
-    * **Lösung:** Wir nutzen die `authorized_imports` Liste in `smolagents` strikt.
-    * **Aufgabe:** Nur harmlose Bibliotheken (`pandas`, `matplotlib`, `numpy`) erlauben. Alles andere (wie `os`, `sys`, `subprocess`) muss hart blockiert werden.
-
-* **Agent Memory (Gedächtnis):**
-    * Der Agent soll sich an **vorherige Nachrichten** erinnern können.
-    * *Beispiel:* "Wie steht Tesla?" $\rightarrow$ Agent antwortet $\rightarrow$ **Nächste Frage:** "Und wie ist das im Vergleich zu Apple?" (Der Agent weiß dann, worum es geht).
-
-* **Prompt Optimization (Smarter fragen):**
-    * Der Agent soll komplizierte Nutzer-Fragen automatisch **umformulieren** oder zerlegen.
-    * *Ziel:* Die Qualität der Antworten steigt, weil der Agent den "Plan" besser versteht.
-
-* **Hybrid Search:**
-    * Wir bauen einen **Router**.
-    * Der Agent entscheidet automatisch: Brauche ich **Text (RAG)** oder **Zahlen (CSV)**?
-    * *Ziel:* Effizienz. Nicht immer alles durchsuchen, wenn es nicht nötig ist.
-
-* **Re-Ranking:**
-    * Nachdem RAG Dokumente gefunden hat, sortiert ein **zweiter Algorithmus** die Ergebnisse nochmal nach Relevanz.
-    * *Ziel:* Nur die allerbesten Treffer werden dem LLM gegeben (weniger Halluzinationen).
-
----
-
-## 3. Aktuelle Probleme (Bugfixing)
-
-* **OpenAI API Limits (Rate Limiting):**
-    * Problem: Der Agent "denkt" zu schnell und feuert zu viele Anfragen $\rightarrow$ Absturz (`429 Error`).
-    * **Lösung:** Wir müssen ein `time.sleep()` einbauen oder den Agenten bremsen, wenn er in einer Loop hängt.
-
-* **Prompting (Reihenfolge erzwingen):**
-    * Problem: Er greift manchmal sofort zur Websuche (die wir eigentlich ausstellen wollen) oder ignoriert Tools.
-    * **Lösung:** Den **System-Prompt** so umschreiben, dass er eine feste Checkliste abarbeitet (1. Erst DB checken, 2. Dann rechnen, 3. Dann antworten).
+    - dann müssen wir alles nochmal ordentlich testen und dann ABGEBEN!
