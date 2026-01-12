@@ -226,7 +226,7 @@ df = pd.DataFrame(rich_data)
 accuracy = df["Overall_Pass"].mean() * 100
 
 print("\n" + "="*60)
-print(f"📊 EVALUATION RESULTS - OVERALL ROBUSTNESS: {accuracy:.1f}%")
+print(f"EVALUATION RESULTS - OVERALL ROBUSTNESS: {accuracy:.1f}%")
 print("="*60)
 
 # Display simplistic table for immediate feedback
