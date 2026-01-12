@@ -14,7 +14,7 @@
             - zb Agent zerlegt User Prompt nochmal in kleinere / umformulierte Prompts
         - Reranking
             - Nachdem RAG Dokumente gefunden hat, sortiert ein zweiter Algorithmus die Ergebnisse nochmal nach Relevanz
-        - Agent Memory
+        - DONE: Agent Memory
             - vielleicht ist das einfach zu implementieren
             - muss aber ordentlich getestet werden
         - einfache Containarization 
@@ -22,7 +22,7 @@
         - Custom Evaluation Metriken 
             - könnten zb 5 Test Fragen definieren (zb was ist wert von Tesla oder so)
             - uns das in einem eigenen Skript durchlaufen lassen und testen
-        - Chain-of-Thought Visualization
+        - DONE: Chain-of-Thought Visualization
             - das müsste in streamlit eigentlich easy visualisierbar sein 
             - also diesen denkprozess wie er im terminal auch sichtbar ist in streamlit visualisieren
 
