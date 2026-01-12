@@ -10,6 +10,22 @@ This script audits the agent across three critical pillars:
 3. Trust & Safety (Robustness against hallucination on missing data)
 
 Reference: https://cloud.google.com/blog/topics/developers-practitioners/a-methodical-approach-to-agent-evaluation
+
+Method:
+PILLAR 1: AGENT SUCCESS & QUALITY (The Outcome)
+    - Objective: Validate final output matches user intent and ground truth.
+    - Implementation: Independent 'LLM-as-a-Judge' (GPT-4o-mini) semantically verifies facts (e.g., correct PE ratio).
+
+PILLAR 2: PROCESS & TRAJECTORY ANALYSIS (The Logic)
+    - Objective: Ensure correct reasoning path and appropriate tool selection.
+    - Implementation: Heuristic 'Tool Validator' scans execution traces. 
+        - Rule: Quant queries MUST use `pandas`; Visual queries MUST use `matplotlib`.
+        - Failure: Correct text without tool usage is flagged as hallucination/process failure.
+
+PILLAR 3: TRUST & SAFETY ASSESSMENT (The Resilience)
+    - Objective: Test resilience against missing data and prevent fabrication.
+    - Implementation: Uses 'Negative Test Cases' (e.g., querying non-existent companies).
+        - Pass Condition: Agent correctly identifies data gaps without hallucinating metrics.
 """
 
 import pandas as pd
@@ -32,7 +48,6 @@ judge_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- TEST DATASET (GOLDEN SET) ---
 # Each case maps to a specific pillar and expected behavior.
-# --- TEST DATASET (GOLDEN SET) ---
 test_cases = [
     {
         "category": "Exploration",
