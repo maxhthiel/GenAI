@@ -28,6 +28,10 @@
             - das müsste in streamlit eigentlich easy visualisierbar sein 
             - also diesen denkprozess wie er im terminal auch sichtbar ist in streamlit visualisieren
 
+    - Bild Generierung muss nochmal STARK bearbeitet werden
+        - bisher verhindert judge dass bilder durchkommen
+        - außerdem müssen sie in der app erscheinen
+        
     - alle müssen ihre Skripte hübsch machen
         - also guter und ordentlicher DRY code
         - gute Doku (zb Inline Kommis oder gute Docstrings)
