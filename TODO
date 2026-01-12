@@ -19,6 +19,8 @@
             - muss aber ordentlich getestet werden
         - einfache Containarization 
             - wir könnten einfach ne Dokkerfile machen, die unsere streamlit app lädt 
+            - hier ist nur die frage ob wir dann alles als container machen müss
+            - aufgabe für extra punkte ist hier: Production-ready deployment (containerization, API)
         - Custom Evaluation Metriken 
             - könnten zb 5 Test Fragen definieren (zb was ist wert von Tesla oder so)
             - uns das in einem eigenen Skript durchlaufen lassen und testen
