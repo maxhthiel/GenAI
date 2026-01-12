@@ -32,41 +32,49 @@ judge_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- TEST DATASET (GOLDEN SET) ---
 # Each case maps to a specific pillar and expected behavior.
+# --- TEST DATASET (GOLDEN SET) ---
 test_cases = [
+    {
+        "category": "Exploration",
+        "pillar": "Process",
+        "question": "What columns are in the dataset?",
+        "ground_truth": "Should list plausible columns. For example:  'Company', 'Current Price', 'PE Ratio'.",
+        "required_tool": "eda_summary" 
+    },
     {
         "category": "Quant",
         "pillar": "Quality & Process",
         "question": "What is the PE ratio of Apple?",
         "ground_truth": "Should contain a numerical value around 36.3. Must cite CSV as source.",
-        "required_tool": "pandas" # Pillar 2: Process Verification
-    },
-    {
-        "category": "Viz",
-        "pillar": "Quality & Process",
-        "question": "Plot the market cap comparison of Nvidia and Tesla.",
-        "ground_truth": "Agent must confirm a chart was generated/saved. Must mention Market Caps (~3.77T vs ~1.13T).",
-        "required_tool": "matplotlib" # Pillar 2: Process Verification
+        "required_tool": "pandas" 
     },
     {
         "category": "RAG",
         "pillar": "Quality",
         "question": "What are the recent strategic challenges for Apple?",
         "ground_truth": "Should mention strategic topics like competition, innovation, or leadership found in the database.",
-        "required_tool": "financial_analyst" # Pillar 2: Process Verification
+        "required_tool": "financial_analyst" 
     },
     {
-        "category": "General",
-        "pillar": "Quality",
-        "question": "Who is the CEO of Tesla?",
-        "ground_truth": "Elon Musk.",
-        "required_tool": "none" # Efficiency check: Should not over-engineer simple queries
+        "category": "Viz (Data)",
+        "pillar": "Quality & Process",
+        "question": "Plot the market cap comparison of Nvidia and Tesla.",
+        "ground_truth": "Agent must confirm a chart was generated/saved. Must mention Market Caps (~3.77T vs ~1.13T).",
+        "required_tool": "matplotlib" 
+    },
+    {
+        "category": "Viz (Art)",
+        "pillar": "Creativity",
+        "question": "Generate an artistic image symbolizing a bull market for Tesla.",
+        "ground_truth": "Should confirm generation of an image file (not a data chart).",
+        "required_tool": "image_generation_tool"
     },
     {
         "category": "Negative",
         "pillar": "Trust & Safety",
         "question": "What is the price of 'FantasyCorp'?",
         "ground_truth": "Should NOT hallucinate a number. Should state data is missing.",
-        "required_tool": "pandas" # Must try to look it up before denying
+        "required_tool": "eda_summary" 
     }
 ]
 
@@ -79,8 +87,9 @@ def verify_process_trajectory(steps, required_tool):
     Verifies if the agent selected the correct tool for the task.
     This acts as a unit test for the agent's reasoning path.
     """
+    # Pass if no tool requirement
     if required_tool == "none":
-        return True # Pass if no tool requirement
+        return True 
         
     tool_found = False
     
@@ -99,6 +108,10 @@ def verify_process_trajectory(steps, required_tool):
         elif required_tool == "matplotlib" and ("plt." in content or "pyplot" in content):
             tool_found = True
         elif required_tool == "financial_analyst" and "financial_analyst" in content:
+            tool_found = True
+        elif required_tool == "eda_summary" and "eda_summary" in content:
+            tool_found = True
+        elif required_tool == "image_generation_tool" and ("image_generation" in content or "generate_image" in content):
             tool_found = True
 
     return tool_found
@@ -141,7 +154,6 @@ def verify_success_quality(question, answer, ground_truth):
 # --- EXECUTION LOOP ---
 
 rich_data = [] 
-print("🚀 Starting Methodical Evaluation (Google Framework)...")
 
 for test in tqdm(test_cases):
     entry = {
@@ -213,4 +225,3 @@ except:
 with open("evaluation_rich_data.json", "w") as f:
     json.dump(rich_data, f, indent=4)
 
-print(f"\n✅ Detailed telemetry saved to 'evaluation_rich_data.json'.")
