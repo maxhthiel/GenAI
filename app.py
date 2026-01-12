@@ -40,6 +40,11 @@ Dieses System wurde im Rahmen eines Abschlussprojekts im Kurs ""Generative AI" e
 * Methodik: Das System basiert auf dem ReAct-Paradigma (Reasoning and Acting). Der Agent plant logische Schritte, schreibt eigenständig Python-Code und führt diesen aus, um verifizierbare Ergebnisse zu liefern.
 * Datenbasis: Die Analyse stützt sich auf einen kuratierten Datensatz des NASDAQ-100 für fundamentale Kennzahlen sowie eine Vektordatenbank (RAG) für die semantische Suche in aktuellen Finanznachrichten.
 * Fähigkeiten: Der Agent kann komplexe Markttrends kontextualisieren, Finanzkennzahlen vergleichen und dynamisch Visualisierungen generieren.
+            
+* Beispiel Anfragen:
+    - "Was weißt du über Tesla?"
+    - "Vergleiche Nvidia mit Meta."
+    - "Analysiere die Volatilität der Top 5 Aktien im letzten Quartal."
 """)
 
 st.markdown("---")
@@ -203,8 +208,6 @@ def get_agent_steps(agent_obj):
 
 # --- 4. SIDEBAR CONTROL PANEL ---
 with st.sidebar:
-    st.header("⚙️ Control Panel")
-    st.info("**Active Modules:**\n- CodeAgent\n- RAG\n- Matplotlib")
     if st.button("🗑️ Reset All", use_container_width=True):
         # Hard reset: Delete the agent instance to force a fresh rebuild
         del st.session_state.agent
