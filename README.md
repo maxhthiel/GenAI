@@ -187,7 +187,7 @@ pip install -r requirements.txt
 Switch between the local and Docker file paths by toggling the comments in the agent_builder.py.
 
 ```
-rag_tool = RAGGraphTool(chroma_path="data") 
+    rag_tool = RAGGraphTool(chroma_path="data") 
     eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
 
     #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
