@@ -2,84 +2,134 @@
 
 ## 📖 Project Overview
 
-**Smol-Quant** is an autonomous agentic system designed to simulate the workflow of a junior financial analyst. Developed using the Hugging Face `smolagents` framework, it moves beyond standard text-prediction chatbots by actively executing code and interacting with disparate data sources.
+**Smol-Quant** is an autonomous agentic system designed to simulate the workflow of a junior financial analyst. Developed as a capstone project for the "Generative AI" course, this system addresses the fundamental limitations of standard LLMs in financial contexts.
 
-The system bridges the gap between quantitative financial analysis and qualitative market research by integrating three core capabilities:
+### The Problem
 
-1.  **Code Execution:** Autonomous generation and execution of Python scripts for statistical analysis and visualization.
-2.  **Semantic Search (RAG):** Retrieval of unstructured qualitative data (news, reports) via vector database querying.
-3.  **Visual Synthesis:** Generation of visual representations for market sentiment using generative AI.
+Standard LLMs frequently hallucinate financial data when asked to perform precise calculations or retrieve up-to-date market information. They lack access to verified internal datasets and often fail to distinguish between creative writing and factual reporting.
+
+### The Solution: Grounded Truth
+
+The agent cannot invent numbers. It must retrieve them from two distinct, verified data sources:
+
+1. **Structured Data:** A comprehensive NASDAQ-100 dataset (CSV) for hard metrics like PE Ratio, Volatility, and Market Cap.
+2. **Unstructured Data:** A Vector Database (ChromaDB) containing news, business summaries, and context from sources like Wikipedia and Yahoo Finance.
+
+---
+
+## 🏗️ System Architecture
+
+### 1. The Brain: CodeAgent (Orchestrator)
+
+At the core lies the `CodeAgent`. Unlike a simple chatbot, this component acts as a reasoning engine. It writes and executes Python code to solve complex problems.
+
+### 2. The Logic: ReAct Pattern
+
+The agent follows the **ReAct (Reasoning + Acting)** paradigm. For every user query, it autonomously cycles through:
+
+* **Reasoning:** Analyzing the user's intent.
+* **Tool Selection:** Deciding which specific tool is required.
+* **Observation:** Reading the output of the tool execution to inform the next step.
+
+### 3. The Safety: LLM-as-a-Judge Pipeline
+
+To ensure operational safety, we implemented a **"Compliance Officer"** layer. This secondary model intercepts every draft response before it reaches the user.
+
+* **Compliance Check:** Scans for financial advice violations or hallucinations.
+* **Self-Correction Loop:** If the Judge rejects an answer, the feedback is injected back into the agent's memory, forcing it to replan and correct its output automatically.
+
+
+---
+
+## 🛠️ The Toolset
+
+The agent is sandboxed and equipped with three specialized tools to handle different data modalities.
+
+### 1. EDA Tool (`eda_summary`)
+
+* **Function:** Acts as the data scout.
+* **Capability:** Provides the agent with metadata, column structures, and statistical summaries of the NASDAQ-100 dataset. This allows the agent to understand the "shape" of the data before performing deep analysis.
+
+### 2. Financial Analyst Tool (`financial_analyst`)
+
+* **Function:** The RAG (Retrieval Augmented Generation) interface.
+* **Capability:** Performs semantic searches within the ChromaDB vector store. It retrieves qualitative context—such as recent strategic challenges or leadership changes—to explain the "why" behind the numbers.
+
+![RAG Pipeline Architecture](images/RAG.jpeg)
+
+### 3. Image Generation Tool (`image_generation_tool`)
+
+* **Function:** The visual artist.
+* **Capability:** Connects to generative image models (DALL-E 3) to create illustrative visuals for abstract concepts, such as "market sentiment" or "bull runs," adding a multi-modal dimension to the report.
+
+![Image Generation Tool](images/Image.jpeg)
+---
+
+## 🔒 Security & Sandbox Environment
+
+To prevent the agent from executing malicious code, the `CodeAgent` operates within a restricted local sandbox. It does not have unrestricted access to the host machine's shell or file system.
+
+### Allowed Libraries
+The agent is strictly limited to importing only a specific set of safe libraries required for data analysis and visualization. Any attempt to import unauthorized modules (e.g., `os`, `sys`, `requests`) is blocked by the runtime.
+
+**Authorized Imports:**
+* `pandas` (Data Manipulation)
+* `numpy` (Numerical Computing)
+* `matplotlib.pyplot` & `seaborn` (Data Visualization)
+* `io`, `base64`, `json`, `ast` (Data Processing)
+
+---
 
 ## 📂 Project Structure
 
-The project follows a modular architecture, separating agent logic, tool definitions, and data storage.
+The project follows a modular architecture separating logic, tools, and data.
 
 ```text
 GenAI/
 ├── agent/
-│   ├── agent_builder.py       # Configuration: Assembles the Agent, Persona, and Tools
+│   ├── agent_builder.py       # Factory: Assembles the Agent, Persona, and Safety Prompts
 │   └── tools/                 # Tool Definitions
-│       ├── smol_rag_tool.py   # Interface for ChromaDB (News/Text Retrieval)
-│       ├── smol_eda_tool.py   # Interface for Pandas DataFrames (Quantitative Analysis)
-│       └── smol_image_tool.py # Interface for Generative Image Models (Visuals)
+│       ├── smol_rag_tool.py   # RAG Interface (Financial Analyst)
+│       ├── smol_eda_tool.py   # EDA Interface (Pandas Scout)
+│       └── smol_image_tool.py # Visual Interface (Image Gen)
 ├── data/
-│   ├── chroma_db/             # Vector Database (Persisted Embeddings)
-│   └── nasdaq_100...csv       # Structured Financial Dataset
-├── main.py                    # Entry Point (CLI / Pipeline Execution)
-├── app.py                     # Entry Point (Streamlit Web Interface)
-└── .env                       # Environment Configuration (API Keys)
+│   ├── chroma_db/             # Persistent Vector Store (Embeddings)
+│   └── nasdaq_100...csv       # Structured Financial Dataset (Source of Truth)
+├── evaluate_agent.py          # Offline Evaluation Pipeline (Scientific Metrics)
+├── main.py                    # CLI Entry Point & Compliance Logic
+├── app.py                     # Streamlit Web Interface (Production UI)
+├── requirements.txt           # Dependency Manifest
+└── .env                       # API Key Configuration
+
 ```
 
-## 🏗️ Technical Architecture
-
-The system utilizes a **ReAct (Reasoning + Acting)** pattern, orchestrated by a central code-generating LLM.
-
-### 1\. The Core: `CodeAgent`
-
-Acting as the central orchestrator, the `CodeAgent` does not merely output text. It plans a sequence of actions, generates Python code to execute those actions, and interprets the execution results to formulate a final response.
-
-### 2\. The Toolset
-
-The agent is equipped with specialized tools to handle different data modalities:
-
-  * **Quantitative Analysis Tool (`EDASummaryTool`):**
-
-      * **Function:** Provides metadata and access paths for the underlying CSV dataset.
-      * **Mechanism:** Enables the agent to write native `pandas` and `matplotlib` code to perform filtering, aggregation, and visualization of financial metrics (e.g., PE Ratio, Volatility).
-
-  * **Qualitative Research Tool (`RAGQueryTool`):**
-
-      * **Function:** Retrieves context-aware text segments from internal documents.
-      * **Mechanism:** Utilizes **ChromaDB** for semantic search. User queries are converted into vector embeddings (`text-embedding-3-small`) to retrieve the most relevant news snippets and business summaries.
-
-  * **Visual Synthesis Tool (`ImageGenerationTool`):**
-
-      * **Function:** Visualizes abstract concepts such as market sentiment.
-      * **Mechanism:** Uses an LLM to refine prompts based on retrieved news, which are then passed to a diffusion model (DALL-E 3) to generate illustrative imagery.
+---
 
 ## ⚙️ Installation & Setup
 
 ### Prerequisites
 
-  * Python 3.10+
-  * OpenAI API Key
+* Python 3.10 or higher
+* OpenAI API Key (with access to GPT-4o and DALL-E 3)
 
-### 1\. Clone Repository
+### 1. Clone Repository
 
 ```bash
 git clone <repo-url>
 cd GenAI
+
 ```
 
-### 2\. Environment Setup
+### 2. Environment Setup
 
-It is recommended to use a virtual environment.
+It is highly recommended to use a virtual environment.
 
 **macOS / Linux:**
 
 ```bash
 python3 -m venv genai
 source genai/bin/activate
+
 ```
 
 **Windows:**
@@ -87,61 +137,80 @@ source genai/bin/activate
 ```bash
 python -m venv genai
 genai\Scripts\activate
+
 ```
 
-### 3\. Dependencies
-
-Install the required packages:
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
+
 ```
 
-### 4\. Configuration
+### 4. Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory and add your credentials:
 
 ```ini
 OPENAI_API_KEY=sk-proj-xxxxxx...
+# Optional: Model overrides
 OPENAI_MODEL=gpt-4o-mini
+
 ```
+
+---
 
 ## 🚀 Usage
 
-The system can be run in two modes:
+### 1. Web Interface (Streamlit)
 
-### A. Terminal Interface (CLI)
-
-Best for debugging and viewing the raw "thought process" of the agent.
-
-```bash
-python main.py
-```
-
-### B. Web Interface (Streamlit)
-
-Provides a user-friendly chat interface with rendered charts and images.
+The primary way to interact with Smol-Quant is via the dashboard, which supports chart rendering, session memory, and the "Thought Process" visualization.
 
 ```bash
 streamlit run app.py
+
 ```
 
-### Example Queries
+### 2. Evaluation Pipeline (Scientific Validation)
 
-  * **Quantitative Analysis:**
+To run the automated quality audit (LLM-as-a-Judge):
 
-    > "Compare the volatility of Tesla and Nvidia over the last year."
-    > "Plot the PE Ratio distribution of the Tech sector."
+```bash
+python evaluate_agent.py
 
-  * **Qualitative Research (RAG):**
+```
 
-    > "What are the recent strategic challenges for Apple?"
-    > "Summarize the latest news regarding Microsoft's AI investments."
+*This generates a `evaluation_rich_data.json` with detailed performance metrics.*
 
-  * **Hybrid Reasoning:**
+---
 
-    > "First, analyze the market cap of Meta. Then, check the latest news to explain recent price movements."
+## 📊 Methodology & Evaluation
 
-  * **Visual Generation:**
+To ensure academic rigor, we implemented an automated evaluation framework inspired by Google's *Purpose-Driven Evaluation*. We test against a **Golden Dataset** covering diverse scenarios.
 
-    > "Visualize the current market sentiment for the semiconductor industry."
+* **Pillar 1: Agent Success & Quality:** Verified by comparing agent-extracted numbers against ground truth using a semantic LLM Judge.
+* **Pillar 2: Process & Trajectory:** Verified by a heuristic validator that ensures the agent selects the correct tool (e.g., using `pandas` for math, not text prediction).
+* **Pillar 3: Trust & Safety:** Verified by "Negative Tests" to ensure the agent reports "Data Missing" rather than hallucinating metrics for non-existent companies.
+
+---
+
+## ✨ Features & Capabilities
+
+This project implements four core components required by the course curriculum, alongside several advanced bonus features.
+
+### ✅ Core Components (Course Requirements)
+1.  **Retrieval Augmented Generation (RAG):**
+    * **Implementation:** Queries a local ChromaDB vector store using OpenAI embeddings to retrieve source-referenced business summaries and news.
+2.  **Data Analysis & Code Execution:**
+    * **Implementation:** The agent autonomously writes and executes `pandas` code to analyze a structured CSV dataset, calculating metrics like volatility distributions.
+3.  **Multi-step Agent Pipeline:**
+    * **Implementation:** Utilizes a Planner-Executor model where the `CodeAgent` breaks down complex user prompts into logical steps (e.g., Load Data → Check News → Plot Comparison). A second LLM acts as "Compliance Officer" and reviews output from CodeAgent.
+4.  **Image Generation Integration:**
+    * **Implementation:** Integrated via function calling to DALL-E 3 for generating illustrative visuals of abstract market concepts.
+
+### 🌟 Bonus & Advanced Features
+* **Scientific Evaluation Pipeline:** A custom "LLM-as-a-Judge" framework (based on Google's *Purpose-Driven Evaluation*) to audit agent performance across Quality, Process, and Safety pillars.
+* **Chain-of-Thought Visualization:** Full transparency in the UI, displaying the agent's internal reasoning traces (Thoughts, Tool Calls, Observations) in real-time.
+* **Conversation Memory:** Persistent session state handling in Streamlit, allowing for multi-turn conversations.
+* **Robustness & Safety Guardrails:** Strict system prompts preventing financial advice and hallucination (e.g., "The Golden Rule" of dual-sourcing data) and 
+* **Self-Correction Loop:** An automated evaluator checks the agent's final output before showing it to the user; if it fails compliance, the agent is forced to rewrite it.
