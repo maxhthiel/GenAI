@@ -182,6 +182,11 @@ genai\Scripts\activate
 pip install -r requirements.txt
 
 ```
+
+### 3.3.b Change the Path
+
+<img width="814" height="127" alt="grafik" src="https://github.com/user-attachments/assets/a6f187fc-63f9-406b-beb7-ded2fb2cc5ec" />
+
 ### 3. Access the Web UI
 
 Open your browser at: 👉 http://localhost:8501
