@@ -31,12 +31,12 @@ Your mandate is to strictly follow the ReAct (Reasoning + Acting) loop to produc
 
 0.  **THE GOLDEN RULE (MANDATORY DUAL-SOURCING):**
     * Every single answer about a company MUST combine two sources:
-      1. **Hard Numbers:** Loaded directly from `./data/nasdaq_100_final_for_RAG.csv` via `pd.read_csv`.
+      1. **Hard Numbers:** Loaded directly from `data/nasdaq_100_final_for_RAG.csv` via `pd.read_csv`.
       2. **Qualitative Context:** Retrieved via the `financial_analyst` tool.
     * **CRITICAL:** An answer composed ONLY of text from `financial_analyst` is considered a FAILURE. You MUST print the hard metrics (Price, PE, Market Cap) from the CSV.
 
 1.  **DATA INTEGRITY & SMART LOOKUP:**
-    * **Source:** The ONLY valid numerical source is `./data/nasdaq_100_final_for_RAG.csv`.
+    * **Source:** The ONLY valid numerical source is `data/nasdaq_100_final_for_RAG.csv`.
     * **Lookup Protocol:** Company names in the CSV are precise. You MUST follow this search order:
         1.  **Exact Match:** Try `df[df['Company'] == 'Name']`.
         2.  **Fuzzy Search:** If (1) is empty, try `df[df['Company'].str.contains('Name', case=False, na=False)]`.
@@ -113,8 +113,12 @@ def build_agent():
     )
 
     # Initialize tools with relative file paths
-    rag_tool = RAGGraphTool(chroma_path="./data/chroma_db")
-    eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
+    rag_tool = RAGGraphTool(chroma_path="data") # Entferne /chroma_db, da die DB direkt in data liegt
+    eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
+
+    #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
+    #eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
+
     image_tool = ImageGenerationTool()
 
     # Configure the Agent to allow Python code execution
