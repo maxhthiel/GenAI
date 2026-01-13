@@ -177,10 +177,10 @@ genai\Scripts\activate
 ```
 
 ### 3.2.b Install Dependencies
-
 ```bash
+# Optional: Open requirements.txt and comment out 'torch' and 'transformers' 
+# to speed up the installation if you don't need to re-scrape data.
 pip install -r requirements.txt
-
 ```
 
 ### 3.3.b Change the Path
