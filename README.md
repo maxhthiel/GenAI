@@ -185,7 +185,13 @@ pip install -r requirements.txt
 
 ### 3.3.b Change the Path
 Switch between the local and Docker file paths by toggling the comments in the agent_builder.py.
-<img width="814" height="127" alt="grafik" src="https://github.com/user-attachments/assets/a6f187fc-63f9-406b-beb7-ded2fb2cc5ec" />
+
+``` rag_tool = RAGGraphTool(chroma_path="data") 
+    eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
+
+    #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
+    #eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
+```
 
 ### 3. Access the Web UI
 
