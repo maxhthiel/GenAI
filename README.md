@@ -38,6 +38,7 @@ To ensure operational safety, we implemented a **"Compliance Officer"** layer. T
 * **Compliance Check:** Scans for financial advice violations or hallucinations.
 * **Self-Correction Loop:** If the Judge rejects an answer, the feedback is injected back into the agent's memory, forcing it to replan and correct its output automatically.
 
+![Agent Pipeline Architecture](images/Agent.jpeg)
 
 ---
 
