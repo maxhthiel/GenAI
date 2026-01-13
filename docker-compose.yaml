@@ -1,0 +1,16 @@
+services:
+  smol-quant-app:
+    build: .
+    container_name: smol_quant_app
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    volumes:
+      # Hier nutzen wir jetzt den Namen des Volumes statt eines lokalen Pfads
+      - my_db_data:/app/data
+    restart: always
+
+# Hier definierst du das Volume global
+volumes:
+  my_db_data:

@@ -1,0 +1,7 @@
+genai/
+**/__pycache__/
+*.pyc
+.env
+.git
+.ipynb_checkpoints/
+Niklas_RAG/
