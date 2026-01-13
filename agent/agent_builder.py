@@ -113,7 +113,7 @@ def build_agent():
     )
 
     # Initialize tools with relative file paths
-    rag_tool = RAGGraphTool(chroma_path="data/chroma_db") # Entferne /chroma_db, da die DB direkt in data liegt
+    rag_tool = RAGGraphTool(chroma_path="data/chroma_db") 
     eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
 
     #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
@@ -146,4 +146,5 @@ def build_agent():
     agent.prompt_templates["system_prompt"] = SMOL_QUANT_PROMPT + "\n\n" + original_prompt
 
     return agent
+
 
