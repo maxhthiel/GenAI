@@ -96,6 +96,9 @@ GenAI/
 ├── data/
 │   ├── chroma_db/             # Persistent Vector Store (Embeddings)
 │   └── nasdaq_100...csv       # Structured Financial Dataset (Source of Truth)
+├── data_ingestions/
+│   ├── data_scraping.py       # Scrape and structure data
+│   └── embeddings.py          # Create embeddings and RAG pipeline
 ├── evaluate_agent.py          # Offline Evaluation Pipeline (Scientific Metrics)
 ├── main.py                    # CLI Entry Point & Compliance Logic
 ├── app.py                     # Streamlit Web Interface (Production UI)
