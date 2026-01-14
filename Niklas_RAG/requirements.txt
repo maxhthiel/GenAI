@@ -1,9 +1,0 @@
-streamlit
-langchain
-langchain-openai
-langchain-community
-langgraph
-pandas
-chromadb
-python-dotenv
-pydantic
