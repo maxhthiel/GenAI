@@ -2,39 +2,31 @@
 
 ## 📖 Project Overview
 
-**Smol-Quant** is an autonomous agentic system designed to simulate the workflow of a junior financial analyst. Developed as a capstone project for the "Generative AI" course, this system addresses the fundamental limitations of standard LLMs in financial contexts.
+**Smol-Quant** is an autonomous agentic system designed to simulate the workflow of a junior financial analyst. 
 
 ### The Problem
-
 Standard LLMs frequently hallucinate financial data when asked to perform precise calculations or retrieve up-to-date market information. They lack access to verified internal datasets and often fail to distinguish between creative writing and factual reporting.
 
 ### The Solution: Grounded Truth
-
 The agent cannot invent numbers. It must retrieve them from two distinct, verified data sources:
-
-1. **Structured Data:** A comprehensive NASDAQ-100 dataset (CSV) for hard metrics like PE Ratio, Volatility, and Market Cap.
-2. **Unstructured Data:** A Vector Database (ChromaDB) containing news, business summaries, and context from sources like Wikipedia and Yahoo Finance.
+1.  **Structured Data:** A comprehensive NASDAQ-100 dataset (CSV) for hard metrics like PE Ratio, Volatility, and Market Cap.
+2.  **Unstructured Data:** A Vector Database (ChromaDB) containing news, business summaries, and context from sources like Wikipedia and Yahoo Finance.
 
 ---
 
 ## 🏗️ System Architecture
 
 ### 1. The Brain: CodeAgent (Orchestrator)
-
 At the core lies the `CodeAgent`. Unlike a simple chatbot, this component acts as a reasoning engine. It writes and executes Python code to solve complex problems.
 
 ### 2. The Logic: ReAct Pattern
-
 The agent follows the **ReAct (Reasoning + Acting)** paradigm. For every user query, it autonomously cycles through:
-
 * **Reasoning:** Analyzing the user's intent.
 * **Tool Selection:** Deciding which specific tool is required.
 * **Observation:** Reading the output of the tool execution to inform the next step.
 
 ### 3. The Safety: LLM-as-a-Judge Pipeline
-
 To ensure operational safety, we implemented a **"Compliance Officer"** layer. This secondary model intercepts every draft response before it reaches the user.
-
 * **Compliance Check:** Scans for financial advice violations or hallucinations.
 * **Self-Correction Loop:** If the Judge rejects an answer, the feedback is injected back into the agent's memory, forcing it to replan and correct its output automatically.
 
@@ -47,23 +39,21 @@ To ensure operational safety, we implemented a **"Compliance Officer"** layer. T
 The agent is sandboxed and equipped with three specialized tools to handle different data modalities.
 
 ### 1. EDA Tool (`eda_summary`)
-
 * **Function:** Acts as the data scout.
 * **Capability:** Provides the agent with metadata, column structures, and statistical summaries of the NASDAQ-100 dataset. This allows the agent to understand the "shape" of the data before performing deep analysis.
 
 ### 2. Financial Analyst Tool (`financial_analyst`)
-
 * **Function:** The RAG (Retrieval Augmented Generation) interface.
 * **Capability:** Performs semantic searches within the ChromaDB vector store. It retrieves qualitative context—such as recent strategic challenges or leadership changes—to explain the "why" behind the numbers.
 
 ![RAG Pipeline Architecture](images/RAG.jpeg)
 
 ### 3. Image Generation Tool (`image_generation_tool`)
-
 * **Function:** The visual artist.
 * **Capability:** Connects to generative image models (DALL-E 3) to create illustrative visuals for abstract concepts, such as "market sentiment" or "bull runs," adding a multi-modal dimension to the report.
 
 ![Image Generation Tool](images/Image.jpeg)
+
 ---
 
 ## 🔒 Security & Sandbox Environment
@@ -88,23 +78,28 @@ The project follows a modular architecture separating logic, tools, and data.
 ```text
 GenAI/
 ├── agent/
-│   ├── agent_builder.py       # Factory: Assembles the Agent, Persona, and Safety Prompts
-│   └── tools/                 # Tool Definitions
-│       ├── smol_rag_tool.py   # RAG Interface (Financial Analyst)
-│       ├── smol_eda_tool.py   # EDA Interface (Pandas Scout)
-│       └── smol_image_tool.py # Visual Interface (Image Gen)
+│   ├── agent_builder.py              # Builds the agent and gives it personality
+│   └── tools/                        # The specific tools the agent can use
+│       ├── smol_rag_tool.py          # Tool to search the database for news/text
+│       ├── smol_eda_tool.py          # Tool to read and analyze the CSV numbers
+│       └── smol_image_tool.py        # Tool to create AI images via DALL-E
 ├── data/
-│   ├── chroma_db/             # Persistent Vector Store (Embeddings)
-│   └── nasdaq_100...csv       # Structured Financial Dataset (Source of Truth)
-├── data_ingestions/
-│   ├── data_scraping.py       # Scrape and structure data
-│   └── embeddings.py          # Create embeddings and RAG pipeline
-├── evaluate_agent.py          # Offline Evaluation Pipeline (Scientific Metrics)
-├── main.py                    # CLI Entry Point & Compliance Logic
-├── app.py                     # Streamlit Web Interface (Production UI)
-├── requirements.txt           # Dependency Manifest
-└── .env                       # API Key Configuration
-
+│   ├── chroma_db/                    # The folder where the vector database lives
+│   └── nasdaq_100...csv              # The main data file with stock info
+├── data_ingestion/
+│   └── data_scraping_embedding.py    # Script to download fresh data and update the database
+├── images/                           # Pictures for the documentation
+│   ├── Agent.jpeg
+│   ├── Image.jpeg
+│   └── Rag.jpeg
+├── evaluate_agent.py                 # Script to test and grade the agent's performance
+├── main.py                           # Run this to chat in the terminal (CLI)
+├── app.py                            # Run this to start the web app (Streamlit)
+├── requirements.txt                  # List of Python libraries needed
+├── .env                              # Place your API keys here
+├── Dockerfile                        # Instructions to build the app container
+├── docker-compose.yaml               # Config to start everything easily with Docker
+└── .dockerignore                     # Files that Docker should ignore
 ```
 
 ---
@@ -123,6 +118,7 @@ git clone <repo-url>
 cd GenAI
 
 ```
+
 ### 2. Configuration
 
 Create a `.env` file in the root directory and add your credentials:
@@ -133,34 +129,39 @@ OPENAI_API_KEY=sk-proj-xxxxxx...
 OPENAI_MODEL=gpt-4o-mini
 
 ```
-### 3. Choose: Old Way (Environment set up) or Easy start with Docker
-### 🐳 Docker: Easy Start (Recommended)
 
-To avoid dependency conflicts and ensure a consistent environment. This method bypasses the need for manual Python environment setup.
+### 3. Choose Deployment Method
 
-### 3.1.a Build and Start the Container
+You can run the application either via Docker (Recommended) or a local Python environment.
 
-Ensure your .env file is present in the root directory, then run:
+#### Option A: 🐳 Docker (Easy Start)
+
+Recommended to ensure a consistent environment and avoid dependency conflicts.
+
+**1. Build and Start Container**
+Ensure your `.env` file is present, then run:
 
 ```bash
 docker-compose up --build -d
+
 ```
-Just be patient. It takes up to 13 minutes (we are using transformers & torch)
 
-### 3.2.a Initialize Data (Scraping & Embedding)
+*Note: The first build may take ~10-15 minutes as it downloads large transformer models.*
 
-The database has an very old input on the first start. Trigger the ingestion script inside the container to scrape fresh NASDAQ data and build the vector store. It takes like 3 minutes:
+**2. Initialize Data (Scraping & Embedding)**
+To scrape fresh NASDAQ data and build the vector store (approx. 3 mins):
 
 ```bash
 docker exec -it smol_quant_app python data_ingestion/data_scraping_embedding.py
+
 ```
 
-### Environment Setup
+#### Option B: 🐍 Local Environment (Legacy)
 
-### 3.2.b Choose your device
-It is highly recommended to use a virtual environment.
+Recommended for development and debugging code directly.
 
-**macOS / Linux:**
+**1. Create Virtual Environment**
+*macOS / Linux:*
 
 ```bash
 python3 -m venv genai
@@ -168,7 +169,7 @@ source genai/bin/activate
 
 ```
 
-**Windows:**
+*Windows:*
 
 ```bash
 python -m venv genai
@@ -176,39 +177,39 @@ genai\Scripts\activate
 
 ```
 
-### 3.2.b Install Dependencies
+**2. Install Dependencies**
+
 ```bash
-# Optional: Open requirements.txt and comment out 'torch' and 'transformers' 
-# to speed up the installation if you don't need to re-scrape data.
+# Tip: Comment out 'torch' and 'transformers' in requirements.txt 
+# if you do not plan to run the scraping script locally.
 pip install -r requirements.txt
-```
-
-### 3.3.b Change the Path
-Switch between the local and Docker file paths by toggling the comments in the agent_builder.py.
 
 ```
-    rag_tool = RAGGraphTool(chroma_path="data") 
-    eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
 
-    #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
-    #eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
+**3. Configure Paths**
+*Note: Toggle the file paths in `agent_builder.py` to point to your local data folders instead of the Docker volume paths.*
+
+**4. Start Application**
+
+```bash
+streamlit run app.py
 ```
 
-### 3. Access the Web UI
+Or for the terminal-only debugging mode: 
 
-Open your browser at: 👉 http://localhost:8501
+```bash
+python main.py
+```
+
 ---
 
 ## 🚀 Usage
 
-### 1. Web Interface (Streamlit)
+### 1. Access Web Interface
 
-The primary way to interact with Smol-Quant is via the dashboard, which supports chart rendering, session memory, and the "Thought Process" visualization.
+Once the app is running (via Docker or locally) open your browser at: **[http://localhost:8501](https://www.google.com/search?q=http://localhost:8501)**
 
-```bash
-streamlit run app.py
-
-```
+The primary way to interact with Smol-Quant is via the Streamlit dashboard, which supports chart rendering, session memory, and real-time visualization of the "Thought Process".
 
 ### 2. Evaluation Pipeline (Scientific Validation)
 
@@ -219,7 +220,7 @@ python evaluate_agent.py
 
 ```
 
-*This generates a `evaluation_rich_data.json` with detailed performance metrics.*
+*This generates a `evaluation_report.md` and `evaluation_rich_data.json` with detailed performance metrics.*
 
 ---
 
@@ -238,18 +239,30 @@ To ensure academic rigor, we implemented an automated evaluation framework inspi
 This project implements four core components required by the course curriculum, alongside several advanced bonus features.
 
 ### ✅ Core Components (Course Requirements)
-1.  **Retrieval Augmented Generation (RAG):**
-    * **Implementation:** Queries a local ChromaDB vector store using OpenAI embeddings to retrieve source-referenced business summaries and news.
-2.  **Data Analysis & Code Execution:**
-    * **Implementation:** The agent autonomously writes and executes `pandas` code to analyze a structured CSV dataset, calculating metrics like volatility distributions.
-3.  **Multi-step Agent Pipeline:**
-    * **Implementation:** Utilizes a Planner-Executor model where the `CodeAgent` breaks down complex user prompts into logical steps (e.g., Load Data → Check News → Plot Comparison). A second LLM acts as "Compliance Officer" and reviews output from CodeAgent.
-4.  **Image Generation Integration:**
-    * **Implementation:** Integrated via function calling to DALL-E 3 for generating illustrative visuals of abstract market concepts.
+
+1. **Retrieval Augmented Generation (RAG):**
+* **Implementation:** Queries a local ChromaDB vector store using OpenAI embeddings to retrieve source-referenced business summaries and news.
+
+
+2. **Data Analysis & Code Execution:**
+* **Implementation:** The agent autonomously writes and executes `pandas` code to analyze a structured CSV dataset, calculating metrics like volatility distributions.
+
+
+3. **Multi-step Agent Pipeline:**
+* **Implementation:** Utilizes a Planner-Executor model where the `CodeAgent` breaks down complex user prompts into logical steps (e.g., Load Data → Check News → Plot Comparison). A second LLM acts as "Compliance Officer" and reviews output from CodeAgent.
+
+
+4. **Image Generation Integration:**
+* **Implementation:** Integrated via function calling to DALL-E 3 for generating illustrative visuals of abstract market concepts.
+
+
 
 ### 🌟 Bonus & Advanced Features
-* **Scientific Evaluation Pipeline:** A custom "LLM-as-a-Judge" framework (based on Google's *Purpose-Driven Evaluation*) to audit agent performance across Quality, Process, and Safety pillars.
-* **Chain-of-Thought Visualization:** Full transparency in the UI, displaying the agent's internal reasoning traces (Thoughts, Tool Calls, Observations) in real-time.
-* **Conversation Memory:** Persistent session state handling in Streamlit, allowing for multi-turn conversations.
-* **Robustness & Safety Guardrails:** Strict system prompts preventing financial advice and hallucination (e.g., "The Golden Rule" of dual-sourcing data) and 
-* **Self-Correction Loop:** An automated evaluator checks the agent's final output before showing it to the user; if it fails compliance, the agent is forced to rewrite it.
+
+* **Production-Ready Deployment (Containerization):** Bundles the full application and data ingestion pipeline into a Docker container. Ensures reproducibility and solves environment dependency issues via `docker-compose`.
+* **Scientific Evaluation Pipeline:** Implements an automated "LLM-as-a-Judge" framework based on Google's methodology. Audits semantic correctness, tool usage, and safety against a Golden Dataset.
+* **Chain-of-Thought Visualization:** Provides full transparency by rendering the agent's internal reasoning steps. Uses Streamlit components to display thoughts, executed code, and tool observations in real-time.
+* **Robustness & Safety Guardrails:** Enforces strict behavioral constraints via system prompting and sandboxing. Prevents financial advice and eliminates hallucinations by mandating the "Dual-Sourcing" of quantitative and qualitative data.
+* **Self-Correction Loop:** Intercepts agent outputs with a secondary compliance model. Automatically triggers a reasoning refinement loop if the response violates safety protocols or lacks data grounding.
+* **Conversation Memory:** Manages persistent session state to enable multi-turn interactions. Allows the agent to retain context and refine previous analysis steps throughout the user session.
+* **LLM Caching Strategies:** Utilizes resource caching decorators to optimize performance. Prevents redundant initialization of heavy RAG tools and agent models across user interactions.
