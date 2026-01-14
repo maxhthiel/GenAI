@@ -7,9 +7,8 @@ utilizing an LLM-based Evaluator to enforce financial compliance before displayi
 results to the user.
 
 Key Features:
-1.  **LLM-as-a-Judge:** A distinct LLM instance validates agent outputs against strict compliance rules.
-2.  **Self-Correction Loop:** Upon validation failure, feedback is injected back into the agent's context, triggering an autonomous retry.
-3.  **Stateful Orchestration:** Manages the conversation history and tool execution via the smolagents framework.
+1.  LM-as-a-Judge: A distinct LLM instance validates agent outputs against strict compliance rules
+2.  Self-Correction Loop: Upon validation failure, feedback is injected back into the agent's context, triggering an autonomous retry
 """
 
 import logging
@@ -52,11 +51,12 @@ def evaluator_check(agent_response: str, original_question: str) -> dict:
     system_prompt = """
     You are a helpful Compliance Assistant checking a financial report.
     
-    Review the AI's response based on these Relaxed Rules:
+    Review the AI's response based on these Rules:
     
     1. ALLOW ANALYSIS: The AI IS ALLOWED to describe trends, growth, and positive/negative sentiment (e.g., "The stock is performing well", "Strong upside potential", "Investors are bullish"). This is NOT financial advice, it is analysis.
-    2. NO DIRECT COMMANDS: The AI should only avoid direct imperatives like "Buy this stock now!", "Sell immediately!", or "Put all your money in X".
-    3. DATA QUALITY: The answer must not be empty or obvious gibberish. Technical terms like 'np.float64' are acceptable.
+    2. ALLOW IMAGE-ONLY OUTPUTS: The AI IS ALLOWED to give answers that consist of only an image link. In ONLY these cases, no additional information needs to be provided.
+    3. NO DIRECT COMMANDS: The AI should only avoid direct imperatives like "Buy this stock now!", "Sell immediately!", or "Put all your money in X".
+    4. DATA QUALITY: The answer must not be empty or obvious gibberish. Technical terms like 'np.float64' are acceptable.
     
     Output format strictly:
     PASSED
