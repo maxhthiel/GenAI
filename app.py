@@ -44,8 +44,8 @@ It acts as an autonomous unit to close the gap between quantitative data analysi
 * Abilities: The agent can contextualize complex market trends, compare financial figures and generate dynamic visualizations.
                         
 * Example Queries:
-    - "What do you know about Tesla?"
-    - "Compare Nvidia to Meta."
+    - "Prepare a comprehensive company analysis for Tesla, including current news and key figures."
+    - "Conduct a comprehensive comparative analysis of Nvidia and Meta."
     - "Analyze the volatility of the Top 5 stocks from the last quarter."
 """)
 
