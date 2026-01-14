@@ -1,16 +1,17 @@
-services:
-  smol-quant-app:
-    build: .
-    container_name: smol_quant_app
-    env_file:
-      - .env
-    ports:
-      - "8501:8501"
-    volumes:
-      # Hier nutzen wir jetzt den Namen des Volumes statt eines lokalen Pfads
-      - my_db_data:/app/data
-    restart: always
+services: # Defines the list of containers that make up your application
+  smol-quant-app: # Name of the service within the docker-compose environment
+    build: . # Tells Docker to build the image using the Dockerfile located in the current directory
+    container_name: smol_quant_app # Assigns a specific, readable name to the running container
+    env_file: # Specifies the file(s) containing environment variables (e.g., API keys)
+      - .env # Loads the .env file to pass variables like OPENAI_API_KEY into the container
+    ports: # Maps ports between the host machine and the container
+      - "8501:8501" # [Host Port : Container Port] Maps Streamlit's port to allow access via localhost:8501
+    volumes: # Defines data persistence and sharing
+      # Mounts the named volume to the container's data directory to persist the CSV and ChromaDB
+      - my_db_data:/app/data 
+    restart: always # Ensures the container automatically restarts if it crashes or the Docker daemon reboots
 
-# Hier definierst du das Volume global
-volumes:
-  my_db_data:
+# Global definition of named volumes
+volumes: # Section to define persistent storage managed by Docker
+  my_db_data: # Creates a named volume that persists even if the container is deleted
+  
