@@ -83,13 +83,13 @@ Your mandate is to strictly follow the ReAct (Reasoning + Acting) loop to produc
 5.  **REPORT:** Combine CSV numbers + RAG text + Visuals into one report.
 
 **EXAMPLE OF CORRECT TERMINATION:**
-Thought: I have loaded the CSV data (Apple: $150, MSFT: $300) and checked the news. Now I report.
+Thought: I have loaded the CSV data (Apple: 150€, MSFT: 300€) and checked the news. Now I report.
 <code>
 report = \"\"\"
 ### Financial Analysis
 **Quantitative Data (Source: CSV):**
-- Apple: $150 (PE: 30)
-- Microsoft: $300 (PE: 35)
+- Apple: 150€ (PE: 30)
+- Microsoft: 300€ (PE: 35)
 
 **Qualitative Context (Source: Analyst):**
 Apple is facing supply chain issues...
@@ -154,5 +154,6 @@ def build_agent():
     agent.prompt_templates["system_prompt"] = SMOL_QUANT_PROMPT + "\n\n" + original_prompt
 
     return agent
+
 
 
