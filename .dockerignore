@@ -1,7 +1,8 @@
-genai/
-**/__pycache__/
-*.pyc
-.env
-.git
-.ipynb_checkpoints/
-Niklas_RAG/
+# just includes all the stuff docker do not need
+genai/                  # Local virtual environment
+**/__pycache__/         # Python bytecode cache
+*.pyc                   # Python compiled files
+.env                    # Sensitive API keys (should be loaded via env_file in docker-compose)
+.git                    # Local git repository history
+.ipynb_checkpoints/     # Jupyter Notebook auto-save files
+*.ipynb                 # Optional: Exclude notebooks to keep the image slim
