@@ -1,30 +1,31 @@
-# 1. Basis-Image: Schlankes Python für schnellere Bauzeiten
+# Slim Python for faster build times and smaller footprint
 FROM python:3.11-slim
 
-# 2. System-Abhängigkeiten für ChromaDB, Pandas und Bildverarbeitung
+# System dependencies required for ChromaDB, Pandas, and image processing
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/
 
-# 3. Arbeitsverzeichnis definieren
+# Define the working directory inside the container
 WORKDIR /app
-# Verhindert, dass Python .pyc Dateien schreibt und sorgt für sofortige Log-Ausgabe
+# Prevents Python from writing .pyc files to disk
 ENV PYTHONDONTWRITEBYTECODE=1
+# Ensures that python output (logs) is sent straight to the terminal without buffering
 ENV PYTHONUNBUFFERED=1
-# Stellt sicher, dass lokale Module wie 'agent' immer gefunden werden
+# Ensures that local modules (e.g., 'agent') are always discoverable
 ENV PYTHONPATH=/app
 
-# 4. Requirements zuerst kopieren (nutzt Docker-Caching)
+# Copy requirements first to leverage Docker layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Den restlichen Code kopieren
-# Dank .dockerignore werden genai/ und .git/ automatisch ausgeschlossen
+# Copy the rest of the application code
+# .dockerignore is used to exclude local envs, git, and large data files
 COPY . .
 
-# 6. Port für Streamlit
+# Streamlit port
 EXPOSE 8501
 
-# 7. Startbefehl: Wir starten die app.py im Hauptverzeichnis
+# Starts the Streamlit dashboard on container launch
 CMD ["python", "-m", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
