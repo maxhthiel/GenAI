@@ -102,8 +102,14 @@ final_answer(report)
 
 def build_agent():
     """
-    Initializes the CodeAgent with specific tools, authorized imports, and the custom system prompt.
-    Returns: Configured CodeAgent instance.
+    Initializes and configures the CodeAgent with specialized tools and authorized libraries.
+
+    This function instantiates the LLM backend, loads domain-specific tools (RAG, EDA, Image),
+    and configures the agent's sandbox to allow necessary data science libraries.
+    It also prepends the custom 'Smol-Quant' persona to the system prompt to enforce strict behavioral rules.
+
+    Returns:
+        CodeAgent: The fully configured autonomous agent instance ready for execution.
     """
     
     # Initialize the reasoning engine (GPT-4o-mini)
@@ -113,15 +119,17 @@ def build_agent():
     )
 
     # Initialize tools with relative file paths
+    # Paths configured for the Docker container env
     rag_tool = RAGGraphTool(chroma_path="data/chroma_db") 
     eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
 
+    # Alternative initialization with relative paths for local development execution
     #rag_tool = RAGGraphTool(chroma_path="./data/chroma_db") 
     #eda_tool = EDASummaryTool(csv_path="./data/nasdaq_100_final_for_RAG.csv")
 
     image_tool = ImageGenerationTool()
 
-    # Configure the Agent to allow Python code execution
+    # Configure the Agent to operate within a sandboxed Python environment
     agent = CodeAgent(
         tools=[rag_tool, eda_tool, image_tool], 
         model=model,
