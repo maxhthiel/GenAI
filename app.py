@@ -10,6 +10,7 @@ from agent.agent_builder import build_agent
 from main import evaluator_check
 
 # --- 1. SYSTEM CONFIGURATION & UI STYLING ---
+
 # Load environment variables (API keys) and configure the Streamlit page layout
 load_dotenv()
 st.set_page_config(page_title="Smol-Quant Analyst", page_icon="📊", layout="wide")
@@ -30,26 +31,28 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI HEADER & EINFÜHRUNG ---
-st.title("Smol-Quant: Autonomer Finanzanalyst")
+# --- UI HEADER & INTRODUCTION ---
+st.title("Smol-Quant: Autonomous Financial Analyst Agent")
 
 st.markdown("""
-Dieses System wurde im Rahmen eines Abschlussprojekts im Kurs ""Generative AI" entwickelt. Es agiert als autonome Einheit, um die Lücke zwischen quantitativer Datenanalyse und qualitativer Marktrecherche zu schließen.
+This system was developed as part of a project in the course "Generative AI".
+It acts as an autonomous unit to close the gap between quantitative data analysis and qualitative market research.
 
-* Projektziel: Entwicklung eines Agenten, der über einfache Textvorhersagen hinausgeht und aktiv Werkzeuge zur Problemlösung nutzt.
-* Methodik: Das System basiert auf dem ReAct-Paradigma (Reasoning and Acting). Der Agent plant logische Schritte, schreibt eigenständig Python-Code und führt diesen aus, um verifizierbare Ergebnisse zu liefern.
-* Datenbasis: Die Analyse stützt sich auf einen kuratierten Datensatz des NASDAQ-100 für fundamentale Kennzahlen sowie eine Vektordatenbank (RAG) für die semantische Suche in aktuellen Finanznachrichten.
-* Fähigkeiten: Der Agent kann komplexe Markttrends kontextualisieren, Finanzkennzahlen vergleichen und dynamisch Visualisierungen generieren.
-            
-* Beispiel Anfragen:
-    - "Was weißt du über Tesla?"
-    - "Vergleiche Nvidia mit Meta."
-    - "Analysiere die Volatilität der Top 5 Aktien im letzten Quartal."
+* Project Goal: Development of an agent that goes past simple text predictions and actively uses tools to solve problems.
+* Methodology: The system is based on the ReACT paradigm (Reasoning and Acting). The agent plans logical steps, independently writes Python code and executes it to deliver verifiable results.
+* Data Basis: The analysis is based on a curated Nasdaq-100 dataset for fundamental financial figures as well as a vector datastore (RAG) for semantic searches in current financial news.
+* Abilities: The agent can contextualize complex market trends, compare financial figures and generate dynamic visualizations.
+                        
+* Example Queries:
+    - "What do you know about Tesla?"
+    - "Compare Nvidia to Meta."
+    - "Analyze the volatility of the Top 5 stocks from the last quarter."
 """)
 
 st.markdown("---")
 
 # --- 2. SESSION STATE INITIALIZATION ---
+
 # Initialize the autonomous agent only once per session to persist memory and avoid reloading overhead
 if "agent" not in st.session_state:
     with st.spinner("🤖 Booting Autonomous Agent..."):
@@ -207,6 +210,7 @@ def get_agent_steps(agent_obj):
     return []
 
 # --- 4. SIDEBAR CONTROL PANEL ---
+
 with st.sidebar:
     if st.button("🗑️ Reset All", use_container_width=True):
         # Hard reset: Delete the agent instance to force a fresh rebuild
@@ -219,6 +223,7 @@ with st.sidebar:
         st.rerun()
 
 # --- 5. CHAT INTERFACE RENDERING ---
+
 # Iterate through session history to render previous messages
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -239,6 +244,7 @@ for msg in st.session_state.messages:
                 st.error("Image file missing.")
 
 # --- 6. MAIN INTERACTION LOOP ---
+        
 if prompt := st.chat_input("Ask about stocks..."):
     
     # Store and display user input
