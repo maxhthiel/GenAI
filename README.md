@@ -139,7 +139,8 @@ You can run the application either via Docker (Recommended) or a local Python en
 Recommended to ensure a consistent environment and avoid dependency conflicts.
 
 **1. Build and Start Container**
-Ensure your `.env` file is present, then run:
+* Optional Performance Tip: To reduce build time from ~15 mins to ~2 mins, open requirements.txt and comment out torch and transformers (only needed for fresh data scraping)
+* Ensure your `.env` file is present, then run:
 
 ```bash
 docker-compose up --build -d
@@ -149,7 +150,8 @@ docker-compose up --build -d
 *Note: The first build may take ~10-15 minutes as it downloads large transformer models.*
 
 **2. Initialize Data (Scraping & Embedding)**
-To scrape fresh NASDAQ data and build the vector store (approx. 3 mins):
+* *Only run this if you kept the heavy libraries installed and need fresh data.*
+* To scrape fresh NASDAQ data and build the vector store (approx. 3 mins):
 
 ```bash
 docker exec -it smol_quant_app python data_ingestion/data_scraping_embedding.py
@@ -231,6 +233,14 @@ To ensure academic rigor, we implemented an automated evaluation framework inspi
 * **Pillar 1: Agent Success & Quality:** Verified by comparing agent-extracted numbers against ground truth using a semantic LLM Judge.
 * **Pillar 2: Process & Trajectory:** Verified by a heuristic validator that ensures the agent selects the correct tool (e.g., using `pandas` for math, not text prediction).
 * **Pillar 3: Trust & Safety:** Verified by "Negative Tests" to ensure the agent reports "Data Missing" rather than hallucinating metrics for non-existent companies.
+
+### Current Benchmark Results
+
+In our standardized test runs, the agent achieved an **Overall Robustness Score of 83.3%**.
+
+* **Success:** Perfect execution on Exploration, Quantitative Analysis, RAG, and Visualization tasks.
+* **Limitations:** The agent occasionally struggles with "Negative Tests" (detecting non-existent companies), which our Compliance Judge correctly flags as failures.
+* *Note: Due to the non-deterministic nature of LLMs, reproduction results may vary slightly between runs.*
 
 ---
 
