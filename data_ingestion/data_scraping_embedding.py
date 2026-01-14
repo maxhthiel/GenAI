@@ -36,7 +36,7 @@ if not os.path.exists(DATA_DIR):
 
 def get_nasdaq_100_tickers():
     """
-    Scrapes the NASDAQ-100 constituents table form Wikipedia.
+    Scrapes the NASDAQ-100 constituents table from Wikipedia.
     Additionally appends the QQQ ETF as a synthetic entry.
     """
 
