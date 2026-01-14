@@ -255,5 +255,5 @@ except:
     print(df[display_cols].to_string(index=False))
 
 # Save as JSON file 
-with open("evaluation_rich_data.json", "w") as f:
+with open("evaluation_results.json", "w") as f:
     json.dump(rich_data, f, indent=4)

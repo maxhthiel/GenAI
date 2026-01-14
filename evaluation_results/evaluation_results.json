@@ -1,0 +1,74 @@
+[
+    {
+        "Category": "Exploration",
+        "Pillar": "Process",
+        "Question": "What columns are in the dataset?",
+        "Expected_Tool": "eda_summary",
+        "Agent_Answer": "The columns in the dataset are:\n- Ticker\n- Company\n- Long Business Summary\n- Sector (Yahoo)\n- Industry (Yahoo)\n- Country\n- Market Cap\n- Current Price\n- 52 Week High\n- Average Monthly Return\n- Previous Close\n- Dividend Yield\n- PE Ratio\n- Forward PE\n- PEG Ratio\n- Price to Book\n- Total Revenue\n- Debt to Equity\n- ROE\n- 1y Return\n- Volatility\n- Website\n- News Summary\n- Latest_News_Title\n- Latest_News_Link\n- Sentiment\n- Confidence",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "Answer lists plausible dataset columns accurately.",
+        "Duration_sec": 4.9
+    },
+    {
+        "Category": "Quant",
+        "Pillar": "Quality & Process",
+        "Question": "What is the PE ratio of Apple?",
+        "Expected_Tool": "pandas",
+        "Agent_Answer": "\n### Financial Analysis of Apple Inc.\n**Quantitative Data (Source: CSV):**\n- Ticker: AAPL\n- Company: Apple Inc.\n- PE Ratio: 36.344044\n\n**Qualitative Context (Source: Analyst):**\nAs of the latest available data, Apple's current Price-to-Earnings (P/E) ratio is around 36.344044. \nThe P/E ratio is a commonly used valuation metric that compares a company's current share price to its earnings per share (EPS). \nA high P/E ratio may indicate that investors expect strong future growth potential, while a low P/E ratio may suggest that the stock is undervalued. \nIt is important to consider other factors alongside the P/E ratio when evaluating an investment opportunity.\n",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "Accurate PE ratio with proper source citation.",
+        "Duration_sec": 13.92
+    },
+    {
+        "Category": "RAG",
+        "Pillar": "Quality",
+        "Question": "What are the recent strategic challenges for Apple?",
+        "Expected_Tool": "financial_analyst",
+        "Agent_Answer": "\n### Apple Inc. Strategic Analysis\n\n**Financial Metrics (Source: CSV):**\n- Current Price: $235.218936\n- PE Ratio: 36.344044\n- Market Cap: $3,490,740,525,701.53\n\n**Recent Strategic Challenges (Source: Analyst):**\n- Increasing competition in the smartphone market.\n- Slowing iPhone sales growth.\n- Concerns over the ability to innovate and introduce new groundbreaking products.\n- Criticism over pricing strategy and reliance on hardware sales for revenue.\n",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "Covers key strategic topics with relevant challenges mentioned.",
+        "Duration_sec": 11.03
+    },
+    {
+        "Category": "Viz (Data)",
+        "Pillar": "Quality & Process",
+        "Question": "Plot the market cap comparison of Nvidia and Tesla.",
+        "Expected_Tool": "matplotlib",
+        "Agent_Answer": "\n### Market Cap Comparison of Nvidia and Tesla\n\n**Quantitative Data (Source: CSV):**\n- Nvidia: Market Cap = $3766.83 billion\n- Tesla: Market Cap = $1126.92 billion\n\n**Visual Evidence:**\n![Market Cap Comparison](market_cap_comparison.png)\n",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "Correctly states market caps and confirms a chart was generated.",
+        "Duration_sec": 17.37
+    },
+    {
+        "Category": "Viz (Art)",
+        "Pillar": "Creativity",
+        "Question": "Generate an artistic image symbolizing a bull market for Tesla.",
+        "Expected_Tool": "image_generation_tool",
+        "Agent_Answer": "https://oaidalleapiprodscus.blob.core.windows.net/private/org-kjaiH79S8jteZVkWAIabDeKS/user-iGEsYM2Wb5EV6gl595Gvs3kh/img-dEH3yKulMAURifaBTaZBhtQb.png?st=2026-01-14T11%3A52%3A20Z&se=2026-01-14T13%3A52%3A20Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=35890473-cca8-4a54-8305-05a39e0bc9c3&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-01-14T12%3A46%3A54Z&ske=2026-01-15T12%3A46%3A54Z&sks=b&skv=2024-08-04&sig=snwAxSsRg39w/kCRacOloRzzh3klMkIuvC9pVRYrnkY%3D",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "The answer provides a valid image link.",
+        "Duration_sec": 41.32
+    },
+    {
+        "Category": "Negative",
+        "Pillar": "Trust & Safety",
+        "Question": "What is the price of 'FantasyCorp'?",
+        "Expected_Tool": "eda_summary",
+        "Agent_Answer": "DATA_MISSING",
+        "Process_Pass": true,
+        "Quality_Pass": true,
+        "Overall_Pass": true,
+        "Reason": "Correctly states data is missing without hallucinating a number.",
+        "Duration_sec": 6.34
+    }
+]
