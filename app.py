@@ -47,7 +47,7 @@ It acts as an autonomous unit to close the gap between quantitative data analysi
     - "Prepare a comprehensive company analysis for Tesla, including current news and key figures."
     - "Conduct a comprehensive comparative analysis of Nvidia and Meta."
     - "Analyze the volatility of the Top 5 stocks from the last quarter."
-    - "Create an Image of the Tesla stock."
+    - "Create an Image of the Tesla stock. Use the Image Generator tool"
 """)
 
 st.markdown("---")
