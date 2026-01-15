@@ -120,7 +120,7 @@ def build_agent():
 
     # Initialize tools with relative file paths
     # Paths configured for the Docker container env
-    rag_tool = RAGGraphTool(chroma_path="data/chroma_db") 
+    rag_tool = RAGGraphTool(chroma_path="data") 
     eda_tool = EDASummaryTool(csv_path="data/nasdaq_100_final_for_RAG.csv")
 
     # Alternative initialization with relative paths for local development execution
@@ -154,6 +154,7 @@ def build_agent():
     agent.prompt_templates["system_prompt"] = SMOL_QUANT_PROMPT + "\n\n" + original_prompt
 
     return agent
+
 
 
 
