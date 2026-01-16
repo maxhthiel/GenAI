@@ -152,7 +152,7 @@ docker-compose up --build -d
 **2. Initialize Data (Scraping & Embedding)**
 * *Only run this if you kept the heavy libraries installed and need fresh data.*
 * To scrape fresh NASDAQ data and build the vector store (approx. 3 mins):
-* A container restart may be needed to apply the fresh embeddings.
+* After executing, a container restart may be needed to use the fresh embeddings.
 
 ```bash
 docker exec -it smol_quant_app python data_ingestion/data_scraping_embedding.py
