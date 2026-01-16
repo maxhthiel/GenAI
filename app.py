@@ -157,47 +157,43 @@ def format_final_answer(text):
 
 def parse_step_content(step):
     """
-    Parses the raw 'ActionStep' object from the agent's memory.
+    Parses the raw step content from smolagents to create a readable Chain-of-Thought.
     
-    The raw step object contains extensive metadata and system prompts. This function
-    extracts only the relevant components (Thoughts, Code, Observations) to display
-    a clean 'Chain of Thought' to the user.
+    This function handles the specific logging structure of CodeAgents, ensuring that
+    thoughts are not hidden by HTML tags and that code execution is clearly separated 
+    from reasoning.
     """
     output = []
     
     # 1. Extract the Agent's Thought Process
-    # Handling different internal attribute names across smolagents versions
-    thought = getattr(step, 'thought', None) 
+    thought = getattr(step, 'thought', "")
     if not thought and hasattr(step, 'model_output'):
         thought = step.model_output
     
     if thought:
-        output.append(f"**🤔 Thought:**\n{thought.strip()}")
+        # Clean up the thought text by removing <code> tags while preserving the content.
+        clean_thought = str(thought).replace("<code>", "").replace("</code>", "").strip()
+        
+        # Only append if there is actual content left after cleaning
+        if clean_thought:
+            output.append(f"**🤔 Thought:**\n{clean_thought}")
 
-    # 2. Extract Executed Tool Code
-    if hasattr(step, 'tool_calls') and step.tool_calls:
-        for call in step.tool_calls:
-            # Code might be in 'arguments' or directly in the call object
-            code = ""
-            if hasattr(call, 'arguments'):
-                code = call.arguments
-            else:
-                code = str(call)
-            
-            # Display only if valid code is found
-            if code:
-                output.append(f"**🛠️ Tool Code:**\n```python\n{code}\n```")
+    # 2. Extract Executed Code
+    code = getattr(step, 'tool_input', "")
+    if code and str(code).strip():
+         # Remove tags that might have been accidentally included in the input string
+        clean_code = str(code).replace("<code>", "").replace("</code>", "").strip()
+        output.append(f"**🛠️ Tool Code:**\n```python\n{clean_code}\n```")
 
-    # 3. Extract the Result/Observation from the Tool
+    # 3. Extract the Result/Observation
     if hasattr(step, 'observations') and step.observations:
-        obs = str(step.observations)
-        # Truncate extremely long outputs (e.g., entire DataFrames) to keep UI clean
-        if len(obs) > 500:
-            obs = obs[:500] + "... [truncated]"
-        output.append(f"**👀 Observation:**\n_{obs}_")
+        obs = str(step.observations).strip()
+        if obs and obs != "None":
+            # Truncate only extremely long outputs (>2000 chars) 
+            display_obs = (obs[:2000] + "\n... [truncated] ...") if len(obs) > 2000 else obs
+            output.append(f"**👀 Observation:**\n`{display_obs}`")
 
     return "\n\n".join(output)
-
 def get_agent_steps(agent_obj):
     """
     Retrieves the execution history safely.
