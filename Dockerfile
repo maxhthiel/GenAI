@@ -18,7 +18,7 @@ ENV PYTHONPATH=/app
 
 # Copy requirements first to leverage Docker layer caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=1500 -r requirements.txt
 
 # Copy the rest of the application code
 # .dockerignore is used to exclude local envs, git, and large data files
@@ -29,3 +29,4 @@ EXPOSE 8501
 
 # Starts the Streamlit dashboard on container launch
 CMD ["python", "-m", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
